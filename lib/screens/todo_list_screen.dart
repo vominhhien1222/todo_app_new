@@ -4,7 +4,6 @@ import '../providers/todo_provider.dart';
 import '../models/todo.dart';
 import 'add_todo_screen.dart';
 import 'profile_screen.dart';
-import 'admin_panel_auth.dart';
 import 'package:intl/intl.dart';
 
 class TodoListScreen extends StatefulWidget {
@@ -42,15 +41,6 @@ class _TodoListScreenState extends State<TodoListScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const ProfileScreen()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.admin_panel_settings),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AdminPanelAuth()),
               );
             },
           ),
