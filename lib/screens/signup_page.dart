@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'todo_list_screen.dart';
-import 'admin_login_screen.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -38,12 +37,15 @@ class _SignupPageState extends State<SignupPage> {
           .set({
             "uid": userCredential.user!.uid,
             "email": _emailController.text.trim(),
+            "username": "Người dùng mới",
             "role": "user", // 👈 user mặc định
+            "avatarUrl": null,
+            "createdAt": FieldValue.serverTimestamp(),
           });
 
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Đăng ký thành công")));
+      ).showSnackBar(const SnackBar(content: Text("Đăng ký thành công ✅")));
 
       // Vào TodoList sau khi đăng ký thành công
       Navigator.pushReplacement(
@@ -60,23 +62,18 @@ class _SignupPageState extends State<SignupPage> {
   }
 
   @override
+  void dispose() {
+    _emailController.dispose();
+    _passController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Đăng ký User"),
         backgroundColor: Colors.teal,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.admin_panel_settings),
-            tooltip: "Admin login",
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
-              );
-            },
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),

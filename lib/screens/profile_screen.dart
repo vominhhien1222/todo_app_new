@@ -17,6 +17,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final auth = FirebaseAuth.instance;
   final picker = ImagePicker();
 
+  /// 🔹 Đổi avatar
   Future<void> _pickAndUploadAvatar() async {
     final user = auth.currentUser;
     if (user == null) return;
@@ -40,16 +41,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
         {"avatarUrl": url},
       );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Cập nhật avatar thành công ✅")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Cập nhật avatar thành công ✅")),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Lỗi khi upload: $e")));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Lỗi khi upload: $e")));
+      }
     }
   }
 
+  /// 🔹 Đăng xuất
   Future<void> _logout() async {
     await auth.signOut();
     if (mounted) {
@@ -77,15 +83,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             .doc(user.uid)
             .snapshots(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) {
+          // ⏳ Đang load
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final data = snapshot.data!.data() as Map<String, dynamic>?;
+          // ❌ Không có dữ liệu hoặc document không tồn tại
+          if (!snapshot.hasData || !snapshot.data!.exists) {
+            return const Center(child: Text("Không tìm thấy thông tin user"));
+          }
 
-          final email = data?["email"] ?? user.email ?? "Không có email";
-          final username = data?["username"] ?? "Người dùng";
-          final avatarUrl = data?["avatarUrl"];
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+          final email = data["email"] ?? user.email ?? "Không có email";
+          final username = data["username"] ?? "Người dùng";
+          final avatarUrl = data["avatarUrl"];
 
           return Center(
             child: Column(

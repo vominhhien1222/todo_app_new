@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'admin_panel_screen.dart';
 
@@ -18,33 +19,50 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     setState(() => _loading = true);
 
     try {
-      // 🔎 Kiểm tra trong Firestore collection "users"
-      final query = await FirebaseFirestore.instance
+      // ✅ Đăng nhập bằng FirebaseAuth
+      final userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passController.text.trim(),
+          );
+
+      final user = userCredential.user;
+      if (user == null) {
+        throw Exception("Không thể đăng nhập admin");
+      }
+
+      // ✅ Check role trong Firestore
+      final doc = await FirebaseFirestore.instance
           .collection('users')
-          .where('email', isEqualTo: _emailController.text.trim())
-          .where('role', isEqualTo: 'admin')
+          .doc(user.uid)
           .get();
 
-      if (query.docs.isNotEmpty) {
-        final data = query.docs.first.data();
-        final adminPass = data['password'] ?? '';
+      if (!doc.exists) {
+        throw Exception("Không tìm thấy thông tin admin trong DB");
+      }
 
-        if (_passController.text.trim() == adminPass) {
-          // ✅ Đúng → sang Admin Panel
+      final data = doc.data() as Map<String, dynamic>;
+      final role = data['role'] ?? 'user';
+
+      if (role == 'admin') {
+        // Đúng admin → sang Admin Panel
+        if (mounted) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (_) => const AdminPanelScreen()),
           );
-        } else {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text("Sai mật khẩu admin")));
         }
       } else {
+        // Không phải admin
+        await FirebaseAuth.instance.signOut(); // sign out lại cho an toàn
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Không tìm thấy tài khoản admin")),
+          const SnackBar(content: Text("Tài khoản này không có quyền Admin ❌")),
         );
       }
+    } on FirebaseAuthException catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Lỗi đăng nhập: ${e.message}")));
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -52,6 +70,13 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     } finally {
       setState(() => _loading = false);
     }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passController.dispose();
+    super.dispose();
   }
 
   @override
