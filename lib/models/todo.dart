@@ -32,7 +32,10 @@ class Todo {
       isCompleted: data['isCompleted'] ?? false,
       imageUrl: data['imageUrl'],
       category: data['category'] ?? 'Khác',
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      // ✅ Nếu chưa có createdAt (serverTimestamp chưa set) → dùng DateTime.now()
+      createdAt: data['createdAt'] != null
+          ? (data['createdAt'] as Timestamp).toDate()
+          : DateTime.now(),
       deadline: data['deadline'] != null
           ? (data['deadline'] as Timestamp).toDate()
           : null,

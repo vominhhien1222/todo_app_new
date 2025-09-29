@@ -5,6 +5,7 @@ import '../models/todo.dart';
 class TodoProvider extends ChangeNotifier {
   final _firestore = FirebaseFirestore.instance;
 
+  // 🔹 Lấy tất cả todos
   Stream<List<Todo>> getTodos() {
     return _firestore
         .collection('todos')
@@ -17,6 +18,7 @@ class TodoProvider extends ChangeNotifier {
         });
   }
 
+  // 🔹 Lấy todos theo category
   Stream<List<Todo>> getTodosByCategory(String category) {
     if (category == "Tất cả") return getTodos();
     return _firestore
@@ -31,6 +33,7 @@ class TodoProvider extends ChangeNotifier {
         });
   }
 
+  // 🔹 Thêm todo mới
   Future<void> addTodo(
     String title,
     String description,
@@ -44,22 +47,25 @@ class TodoProvider extends ChangeNotifier {
       'category': category,
       'isCompleted': false,
       'imageUrl': '',
-      'createdAt': FieldValue.serverTimestamp(),
+      'createdAt': DateTime.now(), // ✅ dùng local time để hiện ngay
       'deadline': deadline,
       'priority': priority,
     });
   }
 
+  // 🔹 Toggle complete
   Future<void> toggleTodoStatus(String id, bool currentStatus) async {
     await _firestore.collection('todos').doc(id).update({
       'isCompleted': !currentStatus,
     });
   }
 
+  // 🔹 Xóa todo
   Future<void> deleteTodo(String id) async {
     await _firestore.collection('todos').doc(id).delete();
   }
 
+  // 🔹 Cập nhật todo
   Future<void> updateTodo(Todo todo) async {
     await _firestore.collection('todos').doc(todo.id).update({
       'title': todo.title,
@@ -67,6 +73,8 @@ class TodoProvider extends ChangeNotifier {
       'category': todo.category,
       'isCompleted': todo.isCompleted,
       if (todo.imageUrl != null) 'imageUrl': todo.imageUrl,
+      'deadline': todo.deadline,
+      'priority': todo.priority,
     });
   }
 }

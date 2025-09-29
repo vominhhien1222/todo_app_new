@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'signup_page.dart';
 import 'forget_password.dart';
 import '../widgets/validate_btn.dart';
 import '../widgets/custom_toast.dart';
-import '../screens/todo_list_screen.dart';
+import 'todo_list_screen.dart';
+import 'admin_panel_screen.dart';
 
 class LoginViaEmail extends StatefulWidget {
   const LoginViaEmail({super.key});
@@ -19,23 +22,46 @@ class _LoginViaEmailState extends State<LoginViaEmail> {
   final passwordController = TextEditingController();
   final auth = FirebaseAuth.instance;
 
-  void _login() {
-    auth
-        .signInWithEmailAndPassword(
-          email: emailController.text,
-          password: passwordController.text,
-        )
-        .then((value) {
-          CustomToast().Toastt('Đăng nhập thành công');
+  Future<void> _login() async {
+    try {
+      final userCredential = await auth.signInWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+
+      final uid = userCredential.user!.uid;
+
+      // 🔎 Lấy role từ Firestore
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+
+      if (snapshot.exists) {
+        final data = snapshot.data()!;
+        final role = data['role'] ?? 'user';
+
+        if (role == 'admin') {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const AdminPanelScreen()),
+            (route) => false,
+          );
+        } else {
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (_) => const TodoListScreen()),
             (route) => false,
           );
-        })
-        .onError((error, _) {
-          CustomToast().Toastt(error.toString());
-        });
+        }
+
+        CustomToast().Toastt("Đăng nhập thành công");
+      } else {
+        CustomToast().Toastt("Không tìm thấy role trong Firestore");
+      }
+    } on FirebaseAuthException catch (e) {
+      CustomToast().Toastt("Lỗi: ${e.message}");
+    }
   }
 
   @override
@@ -81,8 +107,8 @@ class _LoginViaEmailState extends State<LoginViaEmail> {
                         prefixIcon: Icon(Icons.lock, color: Colors.teal),
                         border: OutlineInputBorder(),
                       ),
-                      validator: (value) => value == null || value.length < 4
-                          ? "Mật khẩu ít nhất 4 ký tự"
+                      validator: (value) => value == null || value.length < 6
+                          ? "Mật khẩu ít nhất 6 ký tự"
                           : null,
                     ),
                   ],
@@ -118,7 +144,7 @@ class _LoginViaEmailState extends State<LoginViaEmail> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const SignUpPage()),
+                        MaterialPageRoute(builder: (_) => const SignupPage()),
                       );
                     },
                   ),

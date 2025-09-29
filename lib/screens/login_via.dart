@@ -50,7 +50,7 @@ class LoginVia extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const SignUpPage()),
+                  MaterialPageRoute(builder: (_) => const SignupPage()),
                 );
               },
             ),

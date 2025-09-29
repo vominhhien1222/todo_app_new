@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart'; // file này do flutterfire configure sinh ra
 import 'providers/todo_provider.dart';
-import 'screens/login_via.dart'; // 👈 thay vì todo_list_screen
+import 'screens/login_via.dart'; // 👈 màn hình khởi động
 
 // 👇 Khai báo navigatorKey toàn cục
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
         useMaterial3: true,
       ),
-      home: const LoginVia(), // 👈 màn hình khởi động là Login
+      home: const LoginVia(), // 👈 mặc định vào LoginVia
     );
   }
 }

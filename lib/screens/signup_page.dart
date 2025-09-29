@@ -1,109 +1,116 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../toast/custom_toast.dart';
-import 'login_via_email.dart';
 
-class SignUpPage extends StatefulWidget {
-  const SignUpPage({super.key});
+import 'todo_list_screen.dart';
+import 'admin_login_screen.dart';
+
+class SignupPage extends StatefulWidget {
+  const SignupPage({super.key});
 
   @override
-  State<SignUpPage> createState() => _SignUpPageState();
+  State<SignupPage> createState() => _SignupPageState();
 }
 
-class _SignUpPageState extends State<SignUpPage> {
-  final _formfield = GlobalKey<FormState>();
-  final emailcontroller = TextEditingController();
-  final passwordcontroller = TextEditingController();
-  final auth = FirebaseAuth.instance;
+class _SignupPageState extends State<SignupPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passController = TextEditingController();
+  bool _loading = false;
 
-  @override
-  void dispose() {
-    emailcontroller.dispose();
-    passwordcontroller.dispose();
-    super.dispose();
-  }
+  Future<void> _signupUser() async {
+    if (!_formKey.currentState!.validate()) return;
 
-  Future<void> _signUp() async {
-    if (!_formfield.currentState!.validate()) return;
+    setState(() => _loading = true);
 
     try {
-      final value = await auth.createUserWithEmailAndPassword(
-        email: emailcontroller.text.trim(),
-        password: passwordcontroller.text.trim(),
-      );
+      // Tạo user với FirebaseAuth
+      final userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passController.text.trim(),
+          );
 
-      // 👉 Lưu user vào Firestore với role mặc định là "user"
+      // Lưu thông tin vào Firestore
       await FirebaseFirestore.instance
           .collection("users")
-          .doc(value.user!.uid)
+          .doc(userCredential.user!.uid)
           .set({
-            "email": emailcontroller.text.trim(),
-            "username": emailcontroller.text.trim().split("@")[0],
-            "role": "user",
-            "avatarUrl": null,
+            "uid": userCredential.user!.uid,
+            "email": _emailController.text.trim(),
+            "role": "user", // 👈 user mặc định
           });
 
-      CustomToast().Toastt('Tạo tài khoản thành công ✅');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Đăng ký thành công")));
 
-      // 👉 Chuyển về Login
+      // Vào TodoList sau khi đăng ký thành công
       Navigator.pushReplacement(
         context,
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const LoginViaEmail(),
-          transitionsBuilder: (_, animation, __, child) {
-            const begin = Offset(-1.0, 0.0);
-            const end = Offset.zero;
-            const curve = Curves.easeInOut;
-            var tween = Tween(
-              begin: begin,
-              end: end,
-            ).chain(CurveTween(curve: curve));
-            return SlideTransition(
-              position: animation.drive(tween),
-              child: child,
-            );
-          },
-          transitionDuration: const Duration(milliseconds: 400),
-        ),
+        MaterialPageRoute(builder: (_) => const TodoListScreen()),
       );
     } on FirebaseAuthException catch (e) {
-      CustomToast().Toastt(e.message ?? "Đăng ký thất bại");
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Lỗi: ${e.message}")));
+    } finally {
+      setState(() => _loading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Đăng ký")),
+      appBar: AppBar(
+        title: const Text("Đăng ký User"),
+        backgroundColor: Colors.teal,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.admin_panel_settings),
+            tooltip: "Admin login",
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
+              );
+            },
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
-          key: _formfield,
+          key: _formKey,
           child: Column(
             children: [
               TextFormField(
-                controller: emailcontroller,
+                controller: _emailController,
                 decoration: const InputDecoration(labelText: "Email"),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return "Nhập email";
-                  if (!value.contains('@')) return "Email không hợp lệ";
-                  return null;
-                },
+                validator: (val) => val == null || !val.contains("@")
+                    ? "Email không hợp lệ"
+                    : null,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               TextFormField(
-                controller: passwordcontroller,
+                controller: _passController,
                 obscureText: true,
                 decoration: const InputDecoration(labelText: "Mật khẩu"),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return "Nhập mật khẩu";
-                  if (value.length < 6) return "Mật khẩu ≥ 6 ký tự";
-                  return null;
-                },
+                validator: (val) => val != null && val.length >= 6
+                    ? null
+                    : "Mật khẩu ít nhất 6 ký tự",
               ),
-              const SizedBox(height: 24),
-              ElevatedButton(onPressed: _signUp, child: const Text("Đăng ký")),
+              const SizedBox(height: 20),
+              _loading
+                  ? const CircularProgressIndicator()
+                  : ElevatedButton(
+                      onPressed: _signupUser,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                        minimumSize: const Size(double.infinity, 50),
+                      ),
+                      child: const Text("Đăng ký"),
+                    ),
             ],
           ),
         ),
