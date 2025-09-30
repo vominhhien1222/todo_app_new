@@ -1,22 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../models/todo.dart';
-//  import 'todo_edit_screen.dart';
 
-class TodoDetailScreen extends StatelessWidget {
+class UserDetailScreen extends StatelessWidget {
   final Todo todo;
 
-  const TodoDetailScreen({super.key, required this.todo});
+  const UserDetailScreen({super.key, required this.todo});
 
   @override
   Widget build(BuildContext context) {
+    final createdAt = DateFormat('dd/MM/yyyy HH:mm').format(todo.createdAt);
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Chi tiết công việc")),
+      appBar: AppBar(
+        title: const Text("Chi tiết công việc"),
+        backgroundColor: Colors.teal,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Nếu có ảnh thì hiển thị
             if (todo.imageUrl != null)
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
@@ -74,7 +78,7 @@ class TodoDetailScreen extends StatelessWidget {
             const SizedBox(height: 16),
 
             Text(
-              "Ngày tạo: ${todo.createdAt}",
+              "Ngày tạo: $createdAt",
               style: const TextStyle(fontSize: 14, color: Colors.grey),
             ),
           ],

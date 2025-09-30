@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../providers/todo_provider.dart';
 import '../models/todo.dart';
-import 'add_todo_screen.dart';
-import 'profile_screen.dart';
-import 'package:intl/intl.dart';
+import 'user_detail_screen.dart';
 
-class TodoListScreen extends StatefulWidget {
-  const TodoListScreen({super.key});
+class UserTodosScreen extends StatefulWidget {
+  const UserTodosScreen({super.key});
 
   @override
-  State<TodoListScreen> createState() => _TodoListScreenState();
+  State<UserTodosScreen> createState() => _UserTodosScreenState();
 }
 
-class _TodoListScreenState extends State<TodoListScreen> {
+class _UserTodosScreenState extends State<UserTodosScreen> {
   String selectedCategory = "Tất cả";
   String searchKeyword = "";
 
@@ -34,17 +33,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
       appBar: AppBar(
         title: const Text("Danh sách công việc"),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ProfileScreen()),
-              );
-            },
-          ),
-        ],
+        backgroundColor: Colors.teal,
       ),
       body: Column(
         children: [
@@ -161,7 +150,6 @@ class _TodoListScreenState extends State<TodoListScreen> {
                             if (todo.description.isNotEmpty)
                               Text(todo.description),
 
-                            // 🕒 Deadline
                             if (todo.deadline != null)
                               Text(
                                 "Hạn: ${DateFormat('dd/MM/yyyy').format(todo.deadline!)}",
@@ -173,7 +161,6 @@ class _TodoListScreenState extends State<TodoListScreen> {
                                 ),
                               ),
 
-                            // 🔺 Priority
                             Text(
                               "Ưu tiên: ${todo.priority}",
                               style: TextStyle(
@@ -183,31 +170,15 @@ class _TodoListScreenState extends State<TodoListScreen> {
                             ),
                           ],
                         ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                todo.isCompleted
-                                    ? Icons.check_box
-                                    : Icons.check_box_outline_blank,
-                                color: Colors.teal,
-                              ),
-                              onPressed: () {
-                                provider.toggleTodoStatus(
-                                  todo.id,
-                                  todo.isCompleted,
-                                );
-                              },
+                        // ❌ Không có toggle / delete
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => UserDetailScreen(todo: todo),
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () {
-                                provider.deleteTodo(todo.id);
-                              },
-                            ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
                     );
                   },
@@ -216,15 +187,6 @@ class _TodoListScreenState extends State<TodoListScreen> {
             ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AddTodoScreen()),
-          );
-        },
       ),
     );
   }

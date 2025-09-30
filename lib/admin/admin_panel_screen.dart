@@ -1,0 +1,48 @@
+import 'package:flutter/material.dart';
+
+import 'admin_users_screen.dart';
+import 'admin_todos_screen.dart';
+import 'admin_announcements_screen.dart';
+import 'admin_profile_screen.dart';
+
+class AdminPanelScreen extends StatefulWidget {
+  const AdminPanelScreen({super.key});
+
+  @override
+  State<AdminPanelScreen> createState() => _AdminPanelScreenState();
+}
+
+class _AdminPanelScreenState extends State<AdminPanelScreen> {
+  int _selectedIndex = 0;
+
+  final List<Widget> _screens = const [
+    AdminUsersScreen(),
+    AdminTodosScreen(),
+    AdminAnnouncementsScreen(),
+    AdminProfileScreen(),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() => _selectedIndex = index);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _screens[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.red.shade700,
+        unselectedItemColor: Colors.grey,
+        onTap: _onItemTapped,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.people), label: "Users"),
+          BottomNavigationBarItem(icon: Icon(Icons.task), label: "Todos"),
+          BottomNavigationBarItem(icon: Icon(Icons.campaign), label: "News"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+        ],
+      ),
+    );
+  }
+}
