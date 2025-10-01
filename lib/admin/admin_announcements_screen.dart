@@ -13,6 +13,7 @@ class _AdminAnnouncementsScreenState extends State<AdminAnnouncementsScreen> {
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
 
+  /// 🔹 Thêm thông báo
   Future<void> _addAnnouncement() async {
     await FirebaseFirestore.instance.collection("announcements").add({
       "title": _titleController.text,
@@ -24,55 +25,12 @@ class _AdminAnnouncementsScreenState extends State<AdminAnnouncementsScreen> {
     Navigator.pop(context);
   }
 
-  Future<void> _editAnnouncement(String id, Map<String, dynamic> data) async {
-    _titleController.text = data["title"] ?? "";
-    _contentController.text = data["content"] ?? "";
-
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Sửa Announcement"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(labelText: "Tiêu đề"),
-            ),
-            TextField(
-              controller: _contentController,
-              decoration: const InputDecoration(labelText: "Nội dung"),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Hủy"),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              await FirebaseFirestore.instance
-                  .collection("announcements")
-                  .doc(id)
-                  .update({
-                    "title": _titleController.text,
-                    "content": _contentController.text,
-                  });
-              Navigator.pop(context);
-            },
-            child: const Text("Lưu"),
-          ),
-        ],
-      ),
-    );
-  }
-
+  /// 🔹 Dialog thêm thông báo
   void _openAddDialog() {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Thêm Announcement"),
+        title: const Text("Thêm thông báo"),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -82,33 +40,26 @@ class _AdminAnnouncementsScreenState extends State<AdminAnnouncementsScreen> {
             ),
             TextField(
               controller: _contentController,
+              maxLines: 3,
               decoration: const InputDecoration(labelText: "Nội dung"),
             ),
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Hủy"),
-          ),
-          ElevatedButton(
-            onPressed: _addAnnouncement,
-            child: const Text("Thêm"),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Hủy")),
+          ElevatedButton(onPressed: _addAnnouncement, child: const Text("Thêm")),
         ],
       ),
     );
   }
 
-  Future<void> _deleteAnnouncement(String id, String title) async {
-    await FirebaseFirestore.instance
-        .collection("announcements")
-        .doc(id)
-        .delete();
-    if (context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Đã xóa announcement: $title")));
+  /// 🔹 Xóa thông báo
+  Future<void> _deleteAnnouncement(String id) async {
+    await FirebaseFirestore.instance.collection("announcements").doc(id).delete();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Đã xóa thông báo")),
+      );
     }
   }
 
@@ -116,7 +67,7 @@ class _AdminAnnouncementsScreenState extends State<AdminAnnouncementsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Quản lý Announcements"),
+        title: const Text("Quản lý thông báo"),
         backgroundColor: Colors.red.shade700,
       ),
       floatingActionButton: FloatingActionButton(
@@ -130,36 +81,42 @@ class _AdminAnnouncementsScreenState extends State<AdminAnnouncementsScreen> {
             .orderBy("createdAt", descending: true)
             .snapshots(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData)
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
-          final anns = snapshot.data!.docs;
+          }
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(child: Text("Chưa có thông báo nào"));
+          }
 
-          if (anns.isEmpty)
-            return const Center(child: Text("Chưa có announcement nào"));
+          final docs = snapshot.data!.docs;
 
           return ListView.builder(
-            itemCount: anns.length,
+            itemCount: docs.length,
             itemBuilder: (context, index) {
-              final doc = anns[index];
+              final doc = docs[index];
               final data = doc.data() as Map<String, dynamic>;
-              final title = data["title"] ?? "";
+              final title = data["title"] ?? "Không có tiêu đề";
+              final content = data["content"] ?? "";
+              final createdAt = (data["createdAt"] as Timestamp?)?.toDate();
 
               return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 child: ListTile(
-                  title: Text(title),
-                  subtitle: Text(data["content"] ?? ""),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
+                  title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () => _editAnnouncement(doc.id, data),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _deleteAnnouncement(doc.id, title),
-                      ),
+                      Text(content),
+                      if (createdAt != null)
+                        Text(
+                          "Ngày: ${createdAt.day}/${createdAt.month}/${createdAt.year}",
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
                     ],
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _deleteAnnouncement(doc.id),
                   ),
                 ),
               );
