@@ -46,8 +46,14 @@ class _AdminAnnouncementsScreenState extends State<AdminAnnouncementsScreen> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Hủy")),
-          ElevatedButton(onPressed: _addAnnouncement, child: const Text("Thêm")),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Hủy"),
+          ),
+          ElevatedButton(
+            onPressed: _addAnnouncement,
+            child: const Text("Thêm"),
+          ),
         ],
       ),
     );
@@ -55,11 +61,14 @@ class _AdminAnnouncementsScreenState extends State<AdminAnnouncementsScreen> {
 
   /// 🔹 Xóa thông báo
   Future<void> _deleteAnnouncement(String id) async {
-    await FirebaseFirestore.instance.collection("announcements").doc(id).delete();
+    await FirebaseFirestore.instance
+        .collection("announcements")
+        .doc(id)
+        .delete();
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Đã xóa thông báo")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Đã xóa thông báo")));
     }
   }
 
@@ -102,7 +111,10 @@ class _AdminAnnouncementsScreenState extends State<AdminAnnouncementsScreen> {
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 child: ListTile(
-                  title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  title: Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -110,7 +122,10 @@ class _AdminAnnouncementsScreenState extends State<AdminAnnouncementsScreen> {
                       if (createdAt != null)
                         Text(
                           "Ngày: ${createdAt.day}/${createdAt.month}/${createdAt.year}",
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
                         ),
                     ],
                   ),
