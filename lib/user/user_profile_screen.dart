@@ -81,7 +81,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF00897B), Color(0xFF26A69A)],
+            colors: [
+              Color.fromARGB(255, 250, 137, 226),
+              Color.fromARGB(255, 255, 126, 244),
+            ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),

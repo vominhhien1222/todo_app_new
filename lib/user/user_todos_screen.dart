@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../providers/todo_provider.dart';
 import '../models/todo.dart';
 import 'user_detail_screen.dart';
+import 'user_profile_screen.dart';
+import 'user_announcements_screen.dart'; // 👈 import thêm
 
 class UserTodosScreen extends StatefulWidget {
   const UserTodosScreen({super.key});
@@ -31,9 +33,37 @@ class _UserTodosScreenState extends State<UserTodosScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Danh sách công việc"),
+        title: const Text("Danh Sách Công Việc"),
         centerTitle: true,
-        backgroundColor: Colors.teal,
+        backgroundColor: const Color.fromARGB(255, 240, 96, 185),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            tooltip: "Thông báo",
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const UserAnnouncementsScreen(),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.person),
+            tooltip: "Hồ Sơ Cá Nhân",
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const UserProfileScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -58,9 +88,15 @@ class _UserTodosScreenState extends State<UserTodosScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: TextField(
-              decoration: const InputDecoration(
-                hintText: "Tìm kiếm công việc...",
-                prefixIcon: Icon(Icons.search),
+              decoration: InputDecoration(
+                hintText: "Tìm kiếm công việc đi em...",
+                prefixIcon: const Icon(Icons.search),
+                filled: true,
+                fillColor: Colors.grey.shade100,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
               ),
               onChanged: (value) {
                 setState(() {
@@ -149,7 +185,6 @@ class _UserTodosScreenState extends State<UserTodosScreen> {
                               ),
                             if (todo.description.isNotEmpty)
                               Text(todo.description),
-
                             if (todo.deadline != null)
                               Text(
                                 "Hạn: ${DateFormat('dd/MM/yyyy').format(todo.deadline!)}",
@@ -160,7 +195,6 @@ class _UserTodosScreenState extends State<UserTodosScreen> {
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
-
                             Text(
                               "Ưu tiên: ${todo.priority}",
                               style: TextStyle(
@@ -170,7 +204,7 @@ class _UserTodosScreenState extends State<UserTodosScreen> {
                             ),
                           ],
                         ),
-                        // ❌ Không có toggle / delete
+                        // 👉 User chỉ xem chi tiết
                         onTap: () {
                           Navigator.push(
                             context,

@@ -11,7 +11,7 @@ class CustomToast {
     scaffoldMessenger.showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.teal,
+        backgroundColor: const Color.fromARGB(255, 245, 104, 162),
         duration: const Duration(seconds: 2),
       ),
     );
