@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+//import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../routes.dart';
 import '../widgets/custom_toast.dart';
+import '../auth/ensure_user_doc.dart'; // ⬅️ thêm import
 
 class LoginViaEmail extends StatefulWidget {
   const LoginViaEmail({super.key});
@@ -30,39 +32,44 @@ class _LoginViaEmailState extends State<LoginViaEmail> {
         password: passwordController.text.trim(),
       );
 
-      final uid = userCredential.user!.uid;
-
-      // 🔎 Lấy role từ Firestore
-      final snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
-
-      if (snapshot.exists) {
-        final data = snapshot.data()!;
-        final role = data['role'] ?? 'user';
-
-        if (!mounted) return;
-        if (role == 'admin') {
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            AppRoutes.admin,
-            (route) => false,
-          );
-        } else {
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            AppRoutes.todos,
-            (route) => false,
-          );
-        }
-
-        CustomToast().Toastt("Đăng nhập thành công");
-      } else {
-        CustomToast().Toastt("Không tìm thấy role trong Firestore");
+      final user = userCredential.user;
+      if (user == null) {
+        throw Exception("Không tìm thấy user");
       }
+
+      // 🔹 Refresh token để lấy custom claims mới nhất
+      await user.getIdToken(true);
+
+      // 🔹 Đảm bảo có users/{uid} trong Firestore với status=active
+      await ensureUserDoc();
+
+      // 🔹 Lấy roles từ custom claims
+      final idTokenResult = await user.getIdTokenResult(true);
+      final claims = idTokenResult.claims ?? {};
+      final roles =
+          (claims['roles'] as List?)?.map((e) => e.toString()).toList() ?? [];
+      final isAdmin = roles.contains('admin') || roles.contains('super_admin');
+
+      if (!mounted) return;
+      if (isAdmin) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.admin,
+          (route) => false,
+        );
+      } else {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.todos,
+          (route) => false,
+        );
+      }
+
+      CustomToast().Toastt("Đăng nhập thành công");
     } on FirebaseAuthException catch (e) {
       CustomToast().Toastt("Lỗi: ${e.message}");
+    } catch (e) {
+      CustomToast().Toastt("Lỗi: $e");
     } finally {
       if (mounted) setState(() => _loading = false);
     }
