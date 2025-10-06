@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+
+// import component widgets
+import '../components/custom_btn.dart';
+import '../components/validate_btn.dart';
 
 class AdminTodosScreen extends StatefulWidget {
   const AdminTodosScreen({super.key});
@@ -15,7 +20,17 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
   String _priority = "Medium";
   DateTime? _deadline;
 
+  /// 🔹 Thêm Todo mới
   Future<void> _addTodo() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (_titleController.text.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("⚠️ Vui lòng nhập tiêu đề")));
+      return;
+    }
+
     await FirebaseFirestore.instance.collection("todos").add({
       "title": _titleController.text,
       "description": _descController.text,
@@ -23,14 +38,23 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
       "deadline": _deadline,
       "isCompleted": false,
       "createdAt": FieldValue.serverTimestamp(),
+      "userId": user?.uid, // ✅ fix permission
     });
+
     _titleController.clear();
     _descController.clear();
     _priority = "Medium";
     _deadline = null;
-    Navigator.pop(context);
+
+    if (mounted) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("✅ Đã thêm Todo mới")));
+    }
   }
 
+  /// 🔹 Mở dialog sửa Todo
   Future<void> _editTodo(String id, Map<String, dynamic> data) async {
     _titleController.text = data["title"] ?? "";
     _descController.text = data["description"] ?? "";
@@ -40,7 +64,7 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Sửa Todo"),
+        title: const Text("✏️ Sửa Todo"),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -60,12 +84,13 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
                     .toList(),
                 onChanged: (val) => setState(() => _priority = val!),
               ),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
                     child: Text(
                       _deadline == null
-                          ? "Chưa có deadline"
+                          ? "⏰ Chưa có deadline"
                           : "Deadline: ${DateFormat('dd/MM/yyyy').format(_deadline!)}",
                     ),
                   ),
@@ -96,9 +121,10 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
             onPressed: () => Navigator.pop(context),
             child: const Text("Hủy"),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            onPressed: () async {
+          ValidateBtn(
+            title: "Lưu thay đổi",
+            color: Colors.orange,
+            ontap: () async {
               await FirebaseFirestore.instance
                   .collection("todos")
                   .doc(id)
@@ -108,20 +134,20 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
                     "priority": _priority,
                     "deadline": _deadline,
                   });
-              Navigator.pop(context);
+              if (mounted) Navigator.pop(context);
             },
-            child: const Text("Lưu"),
           ),
         ],
       ),
     );
   }
 
+  /// 🔹 Mở dialog thêm Todo
   void _openAddDialog() {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Thêm Todo"),
+        title: const Text("➕ Thêm Todo"),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -141,12 +167,13 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
                     .toList(),
                 onChanged: (val) => setState(() => _priority = val!),
               ),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
                     child: Text(
                       _deadline == null
-                          ? "Chưa có deadline"
+                          ? "⏰ Chưa có deadline"
                           : "Deadline: ${DateFormat('dd/MM/yyyy').format(_deadline!)}",
                     ),
                   ),
@@ -177,25 +204,23 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
             onPressed: () => Navigator.pop(context),
             child: const Text("Hủy"),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            onPressed: _addTodo,
-            child: const Text("Thêm"),
-          ),
+          ValidateBtn(title: "Thêm", color: Colors.orange, ontap: _addTodo),
         ],
       ),
     );
   }
 
+  /// 🔹 Xóa Todo
   Future<void> _deleteTodo(String id, String title) async {
     await FirebaseFirestore.instance.collection("todos").doc(id).delete();
-    if (context.mounted) {
+    if (mounted) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("Đã xóa todo: $title")));
+      ).showSnackBar(SnackBar(content: Text("🗑️ Đã xóa Todo: $title")));
     }
   }
 
+  /// 🔹 Toggle trạng thái hoàn thành
   Future<void> _toggleComplete(String id, bool current) async {
     await FirebaseFirestore.instance.collection("todos").doc(id).update({
       "isCompleted": !current,
@@ -217,10 +242,11 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.deepOrange,
-        onPressed: _openAddDialog,
-        child: const Icon(Icons.add),
+      floatingActionButton: CustomBtn(
+        title: "Thêm Todo",
+        icon: const Icon(Icons.add, color: Colors.white),
+        color: Colors.deepOrange,
+        ontap: _openAddDialog,
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -228,12 +254,15 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
             .orderBy("createdAt", descending: true)
             .snapshots(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData)
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
-          final todos = snapshot.data!.docs;
+          }
 
-          if (todos.isEmpty)
-            return const Center(child: Text("Chưa có todo nào"));
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(child: Text("📭 Chưa có Todo nào"));
+          }
+
+          final todos = snapshot.data!.docs;
 
           return ListView.builder(
             itemCount: todos.length,

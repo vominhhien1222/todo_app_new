@@ -15,14 +15,42 @@ class _AdminAnnouncementsScreenState extends State<AdminAnnouncementsScreen> {
 
   /// 🔹 Thêm thông báo
   Future<void> _addAnnouncement() async {
-    await FirebaseFirestore.instance.collection("announcements").add({
-      "title": _titleController.text,
-      "content": _contentController.text,
-      "createdAt": FieldValue.serverTimestamp(),
-    });
-    _titleController.clear();
-    _contentController.clear();
-    Navigator.pop(context);
+    final title = _titleController.text.trim();
+    final content = _contentController.text.trim();
+
+    if (title.isEmpty || content.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("⚠️ Vui lòng nhập đủ tiêu đề và nội dung"),
+        ),
+      );
+      return;
+    }
+
+    try {
+      await FirebaseFirestore.instance.collection("announcements").add({
+        "title": title,
+        "content": content,
+        "createdAt": FieldValue.serverTimestamp(),
+      });
+
+      // ✅ Đóng dialog an toàn (tránh lỗi Bad state)
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("✅ Thêm thông báo thành công")),
+        );
+      }
+
+      _titleController.clear();
+      _contentController.clear();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("❌ Lỗi khi thêm thông báo: $e")));
+      }
+    }
   }
 
   /// 🔹 Dialog thêm thông báo
@@ -38,6 +66,7 @@ class _AdminAnnouncementsScreenState extends State<AdminAnnouncementsScreen> {
               controller: _titleController,
               decoration: const InputDecoration(labelText: "Tiêu đề"),
             ),
+            const SizedBox(height: 10),
             TextField(
               controller: _contentController,
               maxLines: 3,
@@ -47,7 +76,7 @@ class _AdminAnnouncementsScreenState extends State<AdminAnnouncementsScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
             child: const Text("Hủy"),
           ),
           ElevatedButton(
@@ -61,14 +90,23 @@ class _AdminAnnouncementsScreenState extends State<AdminAnnouncementsScreen> {
 
   /// 🔹 Xóa thông báo
   Future<void> _deleteAnnouncement(String id) async {
-    await FirebaseFirestore.instance
-        .collection("announcements")
-        .doc(id)
-        .delete();
-    if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Đã xóa thông báo")));
+    try {
+      await FirebaseFirestore.instance
+          .collection("announcements")
+          .doc(id)
+          .delete();
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("🗑️ Đã xóa thông báo")));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("❌ Lỗi khi xóa thông báo: $e")));
+      }
     }
   }
 
@@ -90,11 +128,16 @@ class _AdminAnnouncementsScreenState extends State<AdminAnnouncementsScreen> {
             .orderBy("createdAt", descending: true)
             .snapshots(),
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(child: Text("⚠️ Lỗi tải dữ liệu: ${snapshot.error}"));
+          }
+
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text("Chưa có thông báo nào"));
+            return const Center(child: Text("📭 Chưa có thông báo nào"));
           }
 
           final docs = snapshot.data!.docs;
@@ -118,10 +161,11 @@ class _AdminAnnouncementsScreenState extends State<AdminAnnouncementsScreen> {
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const SizedBox(height: 4),
                       Text(content),
                       if (createdAt != null)
                         Text(
-                          "Ngày: ${createdAt.day}/${createdAt.month}/${createdAt.year}",
+                          "📅 Ngày: ${createdAt.day}/${createdAt.month}/${createdAt.year}",
                           style: const TextStyle(
                             fontSize: 12,
                             color: Colors.grey,

@@ -16,9 +16,8 @@ class AppRoutes {
   static const String todos = '/todos';
   static const String userAnnouncements = '/userAnnouncements';
   static const String admin = '/admin';
-
-  // 👉 THÊM hằng số route cho User Management
-  static const String adminUsers = '/admin/users';
+  static const String adminUsers =
+      '/admin/users'; // 👉 THÊM hằng số route cho User Management
 
   static Map<String, WidgetBuilder> get routes => {
     splash: (_) => const SplashScreen(),
@@ -28,8 +27,6 @@ class AppRoutes {
     todos: (_) => const UserTodosScreen(),
     userAnnouncements: (_) => const UserAnnouncementsScreen(),
     admin: (_) => const AdminPanelScreen(),
-
-    // 👉 MAP route User Management
-    adminUsers: (_) => const AdminUsersScreen(),
+    adminUsers: (_) => const AdminUsersScreen(), // 👉 MAP route User Management
   };
 }

@@ -19,10 +19,7 @@ class TodoProvider extends ChangeNotifier {
         .snapshots()
         .map((snapshot) {
           return snapshot.docs
-              .map(
-                (doc) =>
-                    Todo.fromMap(doc.data() as Map<String, dynamic>, doc.id),
-              ) // ✅ ép kiểu
+              .map((doc) => Todo.fromMap(doc.data(), doc.id)) // ✅ ép kiểu
               .toList();
         });
   }
