@@ -4,7 +4,8 @@ import 'package:firebase_core/firebase_core.dart';
 
 import 'firebase_options.dart';
 import 'providers/todo_provider.dart';
-import 'providers/admin_users_provider.dart'; // ⬅️ thêm
+import 'providers/admin_users_provider.dart';
+import 'providers/theme_provider.dart'; // ✅ Thêm dòng này
 import 'routes.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -17,8 +18,8 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => TodoProvider()),
-        ChangeNotifierProvider(create: (_) => AdminUsersProvider()), // ⬅️ thêm
-        // Nếu sau này có provider khác, thêm vào đây
+        ChangeNotifierProvider(create: (_) => AdminUsersProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: const MyApp(),
     ),
@@ -30,13 +31,22 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return MaterialApp(
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'Todo App',
+      themeMode: themeProvider.currentTheme, // ✅ Dùng theme động
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
         useMaterial3: true,
+        brightness: Brightness.light,
+        colorSchemeSeed: Colors.teal,
+      ),
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        colorSchemeSeed: Colors.tealAccent,
       ),
       initialRoute: AppRoutes.splash,
       routes: AppRoutes.routes,

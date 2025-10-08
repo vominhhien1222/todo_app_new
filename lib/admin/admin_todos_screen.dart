@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
-
-// import component widgets
-import '../components/custom_btn.dart';
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
 import '../components/validate_btn.dart';
 
 class AdminTodosScreen extends StatefulWidget {
@@ -20,197 +19,195 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
   String _priority = "Medium";
   DateTime? _deadline;
 
-  /// 🔹 Thêm Todo mới
+  /// ✅ Thêm Todo (có bắt lỗi)
   Future<void> _addTodo() async {
-    final user = FirebaseAuth.instance.currentUser;
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      print("📡 Current user: ${user?.uid}");
 
-    if (_titleController.text.isEmpty) {
+      if (_titleController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("⚠️ Vui lòng nhập tiêu đề")),
+        );
+        return;
+      }
+
+      await FirebaseFirestore.instance.collection("todos").add({
+        "title": _titleController.text.trim(),
+        "description": _descController.text.trim(),
+        "priority": _priority,
+        "deadline": _deadline,
+        "isCompleted": false,
+        "createdAt": FieldValue.serverTimestamp(),
+        "userId": user?.uid,
+      });
+
+      print("✅ Add success");
+
+      _clearFields();
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("✅ Đã thêm Todo mới")));
+      }
+    } catch (e, s) {
+      print("❌ Add error: $e\n$s");
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("⚠️ Vui lòng nhập tiêu đề")));
-      return;
-    }
-
-    await FirebaseFirestore.instance.collection("todos").add({
-      "title": _titleController.text,
-      "description": _descController.text,
-      "priority": _priority,
-      "deadline": _deadline,
-      "isCompleted": false,
-      "createdAt": FieldValue.serverTimestamp(),
-      "userId": user?.uid, // ✅ fix permission
-    });
-
-    _titleController.clear();
-    _descController.clear();
-    _priority = "Medium";
-    _deadline = null;
-
-    if (mounted) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("✅ Đã thêm Todo mới")));
+      ).showSnackBar(SnackBar(content: Text("Lỗi khi thêm Todo: $e")));
     }
   }
 
-  /// 🔹 Mở dialog sửa Todo
+  /// ✅ Cập nhật Todo
   Future<void> _editTodo(String id, Map<String, dynamic> data) async {
     _titleController.text = data["title"] ?? "";
     _descController.text = data["description"] ?? "";
     _priority = data["priority"] ?? "Medium";
     _deadline = (data["deadline"] as Timestamp?)?.toDate();
 
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("✏️ Sửa Todo"),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _titleController,
-                decoration: const InputDecoration(labelText: "Tiêu đề"),
-              ),
-              TextField(
-                controller: _descController,
-                decoration: const InputDecoration(labelText: "Mô tả"),
-              ),
-              DropdownButton<String>(
-                value: _priority,
-                items: ["High", "Medium", "Low"]
-                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                    .toList(),
-                onChanged: (val) => setState(() => _priority = val!),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      _deadline == null
-                          ? "⏰ Chưa có deadline"
-                          : "Deadline: ${DateFormat('dd/MM/yyyy').format(_deadline!)}",
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.date_range,
-                      color: Colors.deepOrange,
-                    ),
-                    onPressed: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: _deadline ?? DateTime.now(),
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime(2100),
-                      );
-                      if (picked != null) {
-                        setState(() => _deadline = picked);
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Hủy"),
-          ),
-          ValidateBtn(
-            title: "Lưu thay đổi",
-            color: Colors.orange,
-            ontap: () async {
-              await FirebaseFirestore.instance
-                  .collection("todos")
-                  .doc(id)
-                  .update({
-                    "title": _titleController.text,
-                    "description": _descController.text,
-                    "priority": _priority,
-                    "deadline": _deadline,
-                  });
-              if (mounted) Navigator.pop(context);
-            },
-          ),
-        ],
-      ),
+    _showPastelDialog(
+      title: "Sửa Todo",
+      confirmText: "Lưu",
+      onConfirm: () async {
+        await FirebaseFirestore.instance.collection("todos").doc(id).update({
+          "title": _titleController.text.trim(),
+          "description": _descController.text.trim(),
+          "priority": _priority,
+          "deadline": _deadline,
+        });
+        _clearFields();
+        if (mounted) Navigator.pop(context);
+      },
     );
   }
 
-  /// 🔹 Mở dialog thêm Todo
-  void _openAddDialog() {
-    showDialog(
+  /// ✅ Dialog thêm/sửa (có scroll fix overflow)
+  void _showPastelDialog({
+    required String title,
+    required String confirmText,
+    required VoidCallback onConfirm,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? Colors.blueGrey.shade900 : Colors.teal.shade50;
+    final accent = isDark ? Colors.tealAccent.shade200 : Colors.teal;
+
+    showGeneralDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("➕ Thêm Todo"),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _titleController,
-                decoration: const InputDecoration(labelText: "Tiêu đề"),
-              ),
-              TextField(
-                controller: _descController,
-                decoration: const InputDecoration(labelText: "Mô tả"),
-              ),
-              DropdownButton<String>(
-                value: _priority,
-                items: ["High", "Medium", "Low"]
-                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                    .toList(),
-                onChanged: (val) => setState(() => _priority = val!),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      _deadline == null
-                          ? "⏰ Chưa có deadline"
-                          : "Deadline: ${DateFormat('dd/MM/yyyy').format(_deadline!)}",
+      barrierLabel: "TodoDialog",
+      barrierDismissible: true,
+      barrierColor: Colors.black38,
+      transitionDuration: const Duration(milliseconds: 450),
+      pageBuilder: (_, __, ___) => const SizedBox(),
+      transitionBuilder: (_, anim, __, ___) {
+        final curved = Curves.elasticOut.transform(anim.value);
+        return Opacity(
+          opacity: anim.value,
+          child: Transform.scale(
+            scale: 0.9 + curved * 0.1,
+            child: Center(
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  width: MediaQuery.of(context).size.width * 0.9,
+                  constraints: const BoxConstraints(
+                    maxWidth: 420,
+                    maxHeight: 420,
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: accent.withOpacity(0.4),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: SingleChildScrollView(
+                    // ✅ Fix tràn layout
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (title.isNotEmpty) ...[
+                          Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: accent,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                        ],
+                        Card(
+                          color: isDark ? Colors.grey.shade900 : Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(10),
+                            child: Wrap(
+                              runSpacing: 10,
+                              children: [
+                                _buildTextField(_titleController, "Tiêu đề"),
+                                _buildTextField(
+                                  _descController,
+                                  "Mô tả",
+                                  maxLines: 2,
+                                ),
+                                _buildPriorityDropdown(),
+                                _buildDeadlinePicker(),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () {
+                                _clearFields();
+                                Navigator.pop(context);
+                              },
+                              child: const Text(
+                                "HỦY",
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            ValidateBtn(
+                              title: confirmText,
+                              color: accent,
+                              ontap: onConfirm,
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.date_range,
-                      color: Colors.deepOrange,
-                    ),
-                    onPressed: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime(2100),
-                      );
-                      if (picked != null) {
-                        setState(() => _deadline = picked);
-                      }
-                    },
-                  ),
-                ],
+                ),
               ),
-            ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Hủy"),
-          ),
-          ValidateBtn(title: "Thêm", color: Colors.orange, ontap: _addTodo),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  /// 🔹 Xóa Todo
+  /// ✅ Mở dialog thêm Todo
+  void _openAddDialog() => _showPastelDialog(
+    title: "Tạo Todo mới",
+    confirmText: "Thêm",
+    onConfirm: _addTodo,
+  );
+
+  /// ✅ Xóa Todo
   Future<void> _deleteTodo(String id, String title) async {
     await FirebaseFirestore.instance.collection("todos").doc(id).delete();
     if (mounted) {
@@ -220,33 +217,129 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
     }
   }
 
-  /// 🔹 Toggle trạng thái hoàn thành
+  /// ✅ Toggle hoàn thành
   Future<void> _toggleComplete(String id, bool current) async {
     await FirebaseFirestore.instance.collection("todos").doc(id).update({
       "isCompleted": !current,
     });
   }
 
+  void _clearFields() {
+    _titleController.clear();
+    _descController.clear();
+    _priority = "Medium";
+    _deadline = null;
+  }
+
+  /// 🧱 Widget Input
+  Widget _buildTextField(
+    TextEditingController controller,
+    String label, {
+    int maxLines = 1,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final borderColor = isDark
+        ? Colors.tealAccent.shade100
+        : Colors.teal.shade200;
+    final focusColor = isDark ? Colors.tealAccent : Colors.teal;
+
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: isDark ? Colors.grey.shade800 : Colors.white,
+        isDense: true,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: borderColor),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: focusColor, width: 1.5),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPriorityDropdown() {
+    const priorities = ["High", "Medium", "Low"];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return DropdownButtonFormField<String>(
+      value: _priority,
+      items: priorities
+          .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+          .toList(),
+      onChanged: (val) => setState(() => _priority = val!),
+      dropdownColor: isDark ? Colors.grey.shade800 : Colors.white,
+      decoration: InputDecoration(
+        labelText: "Mức ưu tiên",
+        filled: true,
+        fillColor: isDark ? Colors.grey.shade800 : Colors.white,
+        isDense: true,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  Widget _buildDeadlinePicker() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final iconColor = isDark ? Colors.tealAccent : Colors.teal;
+
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            _deadline == null
+                ? "⏰ Chưa có deadline"
+                : "Deadline: ${DateFormat('dd/MM/yyyy').format(_deadline!)}",
+          ),
+        ),
+        IconButton(
+          icon: Icon(Icons.date_range, color: iconColor),
+          onPressed: () async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: _deadline ?? DateTime.now(),
+              firstDate: DateTime.now(),
+              lastDate: DateTime(2100),
+            );
+            if (picked != null) setState(() => _deadline = picked);
+          },
+        ),
+      ],
+    );
+  }
+
+  /// 🧩 UI chính
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = isDark ? Colors.tealAccent : Colors.teal;
+    final cardColor = isDark ? Colors.blueGrey.shade900 : Colors.teal.shade50;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Quản lý Todos"),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.red, Colors.orange],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+        backgroundColor: primaryColor,
+        elevation: 2,
+        actions: [
+          IconButton(
+            icon: Icon(
+              themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+              color: Colors.white,
             ),
+            onPressed: () => themeProvider.toggleTheme(),
           ),
-        ),
+        ],
       ),
-      floatingActionButton: CustomBtn(
-        title: "Thêm Todo",
-        icon: const Icon(Icons.add, color: Colors.white),
-        color: Colors.deepOrange,
-        ontap: _openAddDialog,
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: primaryColor,
+        onPressed: _openAddDialog,
+        child: const Icon(Icons.add, size: 30, color: Colors.white),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -257,13 +350,11 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return const Center(child: Text("📭 Chưa có Todo nào"));
           }
 
           final todos = snapshot.data!.docs;
-
           return ListView.builder(
             itemCount: todos.length,
             itemBuilder: (context, index) {
@@ -282,7 +373,8 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
 
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                elevation: 4,
+                elevation: 3,
+                color: cardColor,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -294,7 +386,9 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
                       decoration: isCompleted
                           ? TextDecoration.lineThrough
                           : null,
-                      color: isCompleted ? Colors.grey : Colors.black,
+                      color: isCompleted
+                          ? Colors.grey
+                          : (isDark ? Colors.white : Colors.black),
                     ),
                   ),
                   subtitle: Column(
@@ -327,7 +421,7 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
                           isCompleted
                               ? Icons.check_box
                               : Icons.check_box_outline_blank,
-                          color: Colors.teal,
+                          color: primaryColor,
                         ),
                         onPressed: () => _toggleComplete(doc.id, isCompleted),
                       ),
