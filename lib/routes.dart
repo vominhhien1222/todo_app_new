@@ -7,6 +7,8 @@ import 'user/user_announcements_screen.dart'; // 👈 đã có
 import 'admin/admin_panel_screen.dart';
 import 'admin/admin_users_screen.dart'; // 👈 THÊM import màn User Management
 import 'splash/splash_screen.dart';
+import 'user/main_bottom_nav.dart';
+import 'admin/admin_todos_screen.dart';
 
 class AppRoutes {
   static const String splash = '/splash';
@@ -16,8 +18,9 @@ class AppRoutes {
   static const String todos = '/todos';
   static const String userAnnouncements = '/userAnnouncements';
   static const String admin = '/admin';
-  static const String adminUsers =
-      '/admin/users'; // 👉 THÊM hằng số route cho User Management
+  static const String adminUsers = '/admin/users';
+  static const String userMain = '/userMain';
+  static const String adminTodos = '/adminTodos';
 
   static Map<String, WidgetBuilder> get routes => {
     splash: (_) => const SplashScreen(),
@@ -27,6 +30,8 @@ class AppRoutes {
     todos: (_) => const UserTodosScreen(),
     userAnnouncements: (_) => const UserAnnouncementsScreen(),
     admin: (_) => const AdminPanelScreen(),
-    adminUsers: (_) => const AdminUsersScreen(), // 👉 MAP route User Management
+    adminUsers: (_) => const AdminUsersScreen(),
+    userMain: (_) => const MainBottomNav(),
+    adminTodos: (_) => const AdminTodosScreen(),
   };
 }

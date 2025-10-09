@@ -54,13 +54,13 @@ class _LoginViaEmailState extends State<LoginViaEmail> {
       if (isAdmin) {
         Navigator.pushNamedAndRemoveUntil(
           context,
-          AppRoutes.admin,
+          AppRoutes.adminTodos,
           (route) => false,
         );
       } else {
         Navigator.pushNamedAndRemoveUntil(
           context,
-          AppRoutes.todos,
+          AppRoutes.userMain,
           (route) => false,
         );
       }

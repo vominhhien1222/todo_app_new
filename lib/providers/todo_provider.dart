@@ -14,7 +14,7 @@ class TodoProvider extends ChangeNotifier {
 
     return _firestore
         .collection('todos')
-        .where("userId", isEqualTo: user.uid) // lọc đúng uid
+        .orderBy("createdAt", descending: true) //
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {

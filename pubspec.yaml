@@ -27,6 +27,7 @@ dependencies:
   fluttertoast: ^8.2.4
   image_picker: ^1.0.7
   intl: ^0.18.1
+  shared_preferences: ^2.3.3 
 
 dev_dependencies:
   flutter_test:
@@ -38,5 +39,8 @@ flutter:
 
   assets:
     - assets/images/logo_car.png
+    - assets/images/news_banner.jpg
+
+
     # hoặc muốn load cả thư mục thì:
     # - assets/images/
