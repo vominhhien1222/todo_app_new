@@ -3,12 +3,13 @@ import 'auth/login_via_email.dart';
 import 'auth/signup_page.dart';
 import 'auth/forget_password.dart';
 import 'user/user_todos_screen.dart';
-import 'user/user_announcements_screen.dart'; // 👈 đã có
+import 'user/user_announcements_screen.dart';
 import 'admin/admin_panel_screen.dart';
-import 'admin/admin_users_screen.dart'; // 👈 THÊM import màn User Management
+import 'admin/admin_users_screen.dart';
 import 'splash/splash_screen.dart';
-import 'user/main_bottom_nav.dart';
+//import 'user/main_bottom_nav.dart';
 import 'admin/admin_todos_screen.dart';
+import 'user/user_main_screen.dart';
 
 class AppRoutes {
   static const String splash = '/splash';
@@ -21,7 +22,7 @@ class AppRoutes {
   static const String adminUsers = '/admin/users';
   static const String userMain = '/userMain';
   static const String adminTodos = '/adminTodos';
-
+  static const String adminPanel = '/adminPanel';
   static Map<String, WidgetBuilder> get routes => {
     splash: (_) => const SplashScreen(),
     login: (_) => const LoginViaEmail(),
@@ -31,7 +32,9 @@ class AppRoutes {
     userAnnouncements: (_) => const UserAnnouncementsScreen(),
     admin: (_) => const AdminPanelScreen(),
     adminUsers: (_) => const AdminUsersScreen(),
-    userMain: (_) => const MainBottomNav(),
+    //userMain: (_) => const MainBottomNav(),
     adminTodos: (_) => const AdminTodosScreen(),
+    userMain: (_) => const UserMainScreen(),
+    adminPanel: (_) => const AdminPanelScreen(),
   };
 }

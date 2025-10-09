@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-//import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../routes.dart';
 import '../widgets/custom_toast.dart';
-import '../auth/ensure_user_doc.dart'; // ⬅️ thêm import
+import '../auth/ensure_user_doc.dart';
 
 class LoginViaEmail extends StatefulWidget {
   const LoginViaEmail({super.key});
@@ -22,50 +21,73 @@ class _LoginViaEmailState extends State<LoginViaEmail> {
   bool _obscurePassword = true;
   bool _loading = false;
 
+  /// 🟢 Hàm đăng nhập chính
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
 
     try {
+      // 1️⃣ Đăng nhập Firebase
       final userCredential = await auth.signInWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
-
       final user = userCredential.user;
-      if (user == null) {
-        throw Exception("Không tìm thấy user");
-      }
+      if (user == null) throw Exception("Không tìm thấy user");
 
-      // 🔹 Refresh token để lấy custom claims mới nhất
+      // 2️⃣ Làm mới token để lấy custom claims
       await user.getIdToken(true);
 
-      // 🔹 Đảm bảo có users/{uid} trong Firestore với status=active
+      // 3️⃣ Đảm bảo document users/{uid} tồn tại
       await ensureUserDoc();
 
-      // 🔹 Lấy roles từ custom claims
+      // 4️⃣ Lấy roles từ custom claims (nếu có)
       final idTokenResult = await user.getIdTokenResult(true);
       final claims = idTokenResult.claims ?? {};
       final roles =
           (claims['roles'] as List?)?.map((e) => e.toString()).toList() ?? [];
-      final isAdmin = roles.contains('admin') || roles.contains('super_admin');
+
+      // 5️⃣ Lấy role từ Firestore (nếu chưa có claims)
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      final firestoreRole = userDoc.data()?['role'] ?? 'user';
+
+      // 6️⃣ Kiểm tra tổng hợp quyền admin
+      final isAdmin =
+          roles.contains('admin') ||
+          roles.contains('super_admin') ||
+          firestoreRole == 'admin' ||
+          firestoreRole == 'super_admin';
+
+      print('🔹 Firestore role: $firestoreRole');
+      print('🔹 Custom claims: $claims');
+
+      // 🟢 7️⃣ Hiển thị toast thành công trước (để Navigator không bị lock)
+      CustomToast().Toastt("Đăng nhập thành công 🎉");
+
+      // ⏳ 8️⃣ Delay nhẹ hoặc gọi sau frame để tránh lỗi !debugLocked
+      await Future.delayed(const Duration(milliseconds: 300));
 
       if (!mounted) return;
+
+      // 🧭 9️⃣ Điều hướng theo quyền
       if (isAdmin) {
+        // 👉 Admin → AdminPanelScreen
         Navigator.pushNamedAndRemoveUntil(
           context,
-          AppRoutes.adminTodos,
+          AppRoutes.adminPanel,
           (route) => false,
         );
       } else {
+        // 👉 User → UserMainScreen
         Navigator.pushNamedAndRemoveUntil(
           context,
           AppRoutes.userMain,
           (route) => false,
         );
       }
-
-      CustomToast().Toastt("Đăng nhập thành công");
     } on FirebaseAuthException catch (e) {
       CustomToast().Toastt("Lỗi: ${e.message}");
     } catch (e) {
@@ -94,7 +116,7 @@ class _LoginViaEmailState extends State<LoginViaEmail> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // 🖼 Logo
+                // 🖼 Logo app
                 Image.asset(
                   "assets/images/logo_car.png",
                   width: 120,
@@ -116,7 +138,7 @@ class _LoginViaEmailState extends State<LoginViaEmail> {
                   key: _formKey,
                   child: Column(
                     children: [
-                      // Email
+                      // ✉️ Email
                       TextFormField(
                         controller: emailController,
                         keyboardType: TextInputType.emailAddress,
@@ -147,7 +169,7 @@ class _LoginViaEmailState extends State<LoginViaEmail> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Password
+                      // 🔒 Password
                       TextFormField(
                         controller: passwordController,
                         obscureText: _obscurePassword,
@@ -163,11 +185,9 @@ class _LoginViaEmailState extends State<LoginViaEmail> {
                                   : Icons.visibility_off,
                               color: Colors.white,
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
-                            },
+                            onPressed: () => setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            }),
                           ),
                           hintText: "Mật khẩu",
                           hintStyle: const TextStyle(color: Colors.white70),
@@ -188,7 +208,7 @@ class _LoginViaEmailState extends State<LoginViaEmail> {
                 ),
                 const SizedBox(height: 20),
 
-                // Quên mật khẩu
+                // 🔁 Quên mật khẩu
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
@@ -202,7 +222,7 @@ class _LoginViaEmailState extends State<LoginViaEmail> {
                 ),
                 const SizedBox(height: 20),
 
-                // Nút login
+                // 🚪 Nút đăng nhập
                 SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -232,7 +252,7 @@ class _LoginViaEmailState extends State<LoginViaEmail> {
                 ),
                 const SizedBox(height: 20),
 
-                // Đăng ký
+                // 🆕 Đăng ký
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
