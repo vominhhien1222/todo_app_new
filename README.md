@@ -1,16 +1,40 @@
-# todo_app_new
+# 🚗 Car Selling & Todo Web App (Flutter + Firebase)
 
-A new Flutter project.
+A modern web application that combines a car selling platform and todo management system, built with Flutter Web and Firebase.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## 🧩 Features
 
-A few resources to get you started if this is your first Flutter project:
+### 👤 User
+- 🔍 View car listings with detailed info & images
+- 🛒 Add cars to cart
+- 🧾 Place orders
+- 🗂️ Manage todos (tasks)
+- 👤 Update profile
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### 🛠 Admin
+- ➕ Add/edit/delete cars with images
+- 📦 View all user carts
+- 📑 View all orders
+- 📊 Dashboard with analytics (revenue, order status)
+- 🧑‍💻 Manage users
+- 📢 Post announcements
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+---
+
+## 🛠️ Tech Stack
+
+| Layer        | Technology             |
+|--------------|-------------------------|
+| Frontend     | Flutter Web (3.x)       |
+| Backend      | Firebase Firestore      |
+| Auth         | Firebase Auth (Email)   |
+| Hosting      | Firebase Hosting        |
+| State Mgmt   | Provider + ChangeNotifier |
+| Charts       | fl_chart                |
+
+---
+
+## 📦 Project Structure
+
