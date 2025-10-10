@@ -19,13 +19,14 @@ dependencies:
   firebase_auth: ^5.3.1
   cloud_firestore: ^5.5.1
   firebase_storage: ^12.4.10
+  fl_chart: ^0.66.1
 
   # State management
   provider: ^6.1.2
 
   # Khác
   fluttertoast: ^8.2.4
-  image_picker: ^1.0.7
+  image_picker: ^1.2.0
   intl: ^0.18.1
   shared_preferences: ^2.3.3 
 

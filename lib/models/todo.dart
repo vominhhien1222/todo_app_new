@@ -8,10 +8,10 @@ class Todo {
   final String? imageUrl;
   final String category;
   final DateTime createdAt;
-
-  final DateTime? deadline; // 🆕
-  final String priority; // 🆕
-
+  final DateTime? deadline;
+  final String priority;
+  final bool shared;
+  final String? userId;
   Todo({
     required this.id,
     required this.title,
@@ -22,6 +22,8 @@ class Todo {
     required this.createdAt,
     this.deadline,
     required this.priority,
+    this.shared = false,
+    this.userId,
   });
 
   factory Todo.fromMap(Map<String, dynamic> data, String id) {
@@ -32,7 +34,6 @@ class Todo {
       isCompleted: data['isCompleted'] ?? false,
       imageUrl: data['imageUrl'],
       category: data['category'] ?? 'Khác',
-      // ✅ Nếu chưa có createdAt (serverTimestamp chưa set) → dùng DateTime.now()
       createdAt: data['createdAt'] != null
           ? (data['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
@@ -40,6 +41,8 @@ class Todo {
           ? (data['deadline'] as Timestamp).toDate()
           : null,
       priority: data['priority'] ?? 'Medium',
+      shared: data['shared'] ?? false,
+      userId: data['userId'],
     );
   }
 
@@ -53,6 +56,8 @@ class Todo {
       'createdAt': createdAt,
       'deadline': deadline,
       'priority': priority,
+      'shared': shared,
+      'userId': userId, // ✅ ghi id người tạo vào Firestore
     };
   }
 }

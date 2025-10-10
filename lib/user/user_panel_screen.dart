@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'user_todos_screen.dart';
 import 'user_profile_screen.dart';
+import 'user_orders_screen.dart'; // ✅ import thêm
 
 class UserPanelScreen extends StatefulWidget {
   const UserPanelScreen({super.key});
@@ -12,8 +13,12 @@ class UserPanelScreen extends StatefulWidget {
 class _UserPanelScreenState extends State<UserPanelScreen> {
   int _currentIndex = 0;
 
-  // Danh sách các tab (Công việc + Hồ sơ)
-  final List<Widget> _screens = const [UserTodosScreen(), UserProfileScreen()];
+  // ✅ Danh sách các tab (Công việc + Hồ sơ + Đơn hàng)
+  final List<Widget> _screens = const [
+    UserTodosScreen(),
+    UserProfileScreen(),
+    UserOrdersScreen(), // ✅ thêm dòng này
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +41,7 @@ class _UserPanelScreenState extends State<UserPanelScreen> {
             label: "Công việc",
           ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Hồ sơ"),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: "Đơn hàng"),
         ],
       ),
     );

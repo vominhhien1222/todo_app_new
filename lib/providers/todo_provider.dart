@@ -14,12 +14,20 @@ class TodoProvider extends ChangeNotifier {
 
     return _firestore
         .collection('todos')
-        .orderBy("createdAt", descending: true) //
+        .where(
+          Filter.or(
+            Filter('userId', isEqualTo: user.uid),
+            Filter('shared', isEqualTo: true),
+          ),
+        )
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
           return snapshot.docs
-              .map((doc) => Todo.fromMap(doc.data(), doc.id)) // ✅ ép kiểu
+              .map(
+                (doc) =>
+                    Todo.fromMap(Map<String, dynamic>.from(doc.data()), doc.id),
+              )
               .toList();
         });
   }
@@ -31,18 +39,25 @@ class TodoProvider extends ChangeNotifier {
 
     Query query = _firestore
         .collection('todos')
-        .where("userId", isEqualTo: user.uid)
         .orderBy('createdAt', descending: true);
 
     if (category != "Tất cả") {
       query = query.where("category", isEqualTo: category);
     }
 
+    // ✅ Lọc theo userId hoặc shared = true
+    query = query.where(
+      Filter.or(
+        Filter('userId', isEqualTo: user.uid),
+        Filter('shared', isEqualTo: true),
+      ),
+    );
+
     return query.snapshots().map((snapshot) {
       return snapshot.docs
           .map(
             (doc) => Todo.fromMap(doc.data() as Map<String, dynamic>, doc.id),
-          ) // ✅ ép kiểu
+          )
           .toList();
     });
   }

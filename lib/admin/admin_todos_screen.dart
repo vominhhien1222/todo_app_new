@@ -18,13 +18,12 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
   final _descController = TextEditingController();
   String _priority = "Medium";
   DateTime? _deadline;
+  bool _shared = false;
 
-  /// ✅ Thêm Todo (có bắt lỗi)
+  /// ✅ Thêm Todo
   Future<void> _addTodo() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
-      print("📡 Current user: ${user?.uid}");
-
       if (_titleController.text.trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("⚠️ Vui lòng nhập tiêu đề")),
@@ -40,15 +39,12 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
         "isCompleted": false,
         "createdAt": FieldValue.serverTimestamp(),
         "userId": user?.uid,
+        "shared": _shared, // ✅ Bắt đầu false trừ khi admin bật
       });
 
-      print("✅ Add success");
-
       _clearFields();
-      if (mounted && Navigator.canPop(context)) {
-        Navigator.pop(context);
-      }
       if (mounted) {
+        Navigator.pop(context);
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text("✅ Đã thêm Todo mới")));
@@ -67,6 +63,7 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
     _descController.text = data["description"] ?? "";
     _priority = data["priority"] ?? "Medium";
     _deadline = (data["deadline"] as Timestamp?)?.toDate();
+    _shared = data["shared"] ?? false;
 
     _showPastelDialog(
       title: "Sửa Todo",
@@ -77,6 +74,7 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
           "description": _descController.text.trim(),
           "priority": _priority,
           "deadline": _deadline,
+          "shared": _shared,
         });
         _clearFields();
         if (mounted) Navigator.pop(context);
@@ -84,7 +82,7 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
     );
   }
 
-  /// ✅ Dialog thêm/sửa (có scroll fix overflow)
+  /// ✅ Dialog thêm/sửa Todo
   void _showPastelDialog({
     required String title,
     required String confirmText,
@@ -94,120 +92,56 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
     final bgColor = isDark ? Colors.blueGrey.shade900 : Colors.teal.shade50;
     final accent = isDark ? Colors.tealAccent.shade200 : Colors.teal;
 
-    showGeneralDialog(
+    showDialog(
       context: context,
-      barrierLabel: "TodoDialog",
       barrierDismissible: true,
-      barrierColor: Colors.black38,
-      transitionDuration: const Duration(milliseconds: 450),
-      pageBuilder: (_, __, ___) => const SizedBox(),
-      transitionBuilder: (_, anim, __, ___) {
-        final curved = Curves.elasticOut.transform(anim.value);
-        return Opacity(
-          opacity: anim.value,
-          child: Transform.scale(
-            scale: 0.9 + curved * 0.1,
-            child: Center(
-              child: Material(
-                color: Colors.transparent,
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.9,
-                  constraints: const BoxConstraints(
-                    maxWidth: 420,
-                    maxHeight: 420,
-                  ),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: bgColor,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: accent.withOpacity(0.4),
-                        blurRadius: 18,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: SingleChildScrollView(
-                    // ✅ Fix tràn layout
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (title.isNotEmpty) ...[
-                          Text(
-                            title,
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                              color: accent,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                        ],
-                        Card(
-                          color: isDark ? Colors.grey.shade900 : Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(10),
-                            child: Wrap(
-                              runSpacing: 10,
-                              children: [
-                                _buildTextField(_titleController, "Tiêu đề"),
-                                _buildTextField(
-                                  _descController,
-                                  "Mô tả",
-                                  maxLines: 2,
-                                ),
-                                _buildPriorityDropdown(),
-                                _buildDeadlinePicker(),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton(
-                              onPressed: () {
-                                _clearFields();
-                                Navigator.pop(context);
-                              },
-                              child: const Text(
-                                "HỦY",
-                                style: TextStyle(color: Colors.grey),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            ValidateBtn(
-                              title: confirmText,
-                              color: accent,
-                              ontap: onConfirm,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+      builder: (_) => AlertDialog(
+        backgroundColor: bgColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(title, style: TextStyle(color: accent)),
+        content: SingleChildScrollView(
+          child: Column(
+            children: [
+              _buildTextField(_titleController, "Tiêu đề"),
+              const SizedBox(height: 8),
+              _buildTextField(_descController, "Mô tả", maxLines: 2),
+              const SizedBox(height: 8),
+              _buildPriorityDropdown(),
+              const SizedBox(height: 8),
+              _buildDeadlinePicker(),
+              const Divider(),
+              SwitchListTile(
+                title: const Text(
+                  "Chia sẻ với người dùng",
+                  style: TextStyle(fontWeight: FontWeight.w600),
                 ),
+                value: _shared,
+                activeColor: accent,
+                onChanged: (val) => setState(() => _shared = val),
               ),
-            ),
+            ],
           ),
-        );
-      },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              _clearFields();
+              Navigator.pop(context);
+            },
+            child: const Text("HỦY"),
+          ),
+          ValidateBtn(title: confirmText, color: accent, ontap: onConfirm),
+        ],
+      ),
     );
   }
 
-  /// ✅ Mở dialog thêm Todo
   void _openAddDialog() => _showPastelDialog(
     title: "Tạo Todo mới",
     confirmText: "Thêm",
     onConfirm: _addTodo,
   );
 
-  /// ✅ Xóa Todo
   Future<void> _deleteTodo(String id, String title) async {
     await FirebaseFirestore.instance.collection("todos").doc(id).delete();
     if (mounted) {
@@ -217,11 +151,25 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
     }
   }
 
-  /// ✅ Toggle hoàn thành
   Future<void> _toggleComplete(String id, bool current) async {
     await FirebaseFirestore.instance.collection("todos").doc(id).update({
       "isCompleted": !current,
     });
+  }
+
+  Future<void> _toggleShare(String id, bool currentShared) async {
+    await FirebaseFirestore.instance.collection("todos").doc(id).update({
+      "shared": !currentShared,
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          !currentShared
+              ? "📢 Đã chia sẻ Todo với người dùng!"
+              : "🔒 Đã ngừng chia sẻ Todo",
+        ),
+      ),
+    );
   }
 
   void _clearFields() {
@@ -229,36 +177,23 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
     _descController.clear();
     _priority = "Medium";
     _deadline = null;
+    _shared = false;
   }
 
-  /// 🧱 Widget Input
   Widget _buildTextField(
-    TextEditingController controller,
+    TextEditingController c,
     String label, {
     int maxLines = 1,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final borderColor = isDark
-        ? Colors.tealAccent.shade100
-        : Colors.teal.shade200;
-    final focusColor = isDark ? Colors.tealAccent : Colors.teal;
-
     return TextField(
-      controller: controller,
+      controller: c,
       maxLines: maxLines,
       decoration: InputDecoration(
         labelText: label,
         filled: true,
         fillColor: isDark ? Colors.grey.shade800 : Colors.white,
-        isDense: true,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: borderColor),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: focusColor, width: 1.5),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -266,7 +201,6 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
   Widget _buildPriorityDropdown() {
     const priorities = ["High", "Medium", "Low"];
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return DropdownButtonFormField<String>(
       value: _priority,
       items: priorities
@@ -278,7 +212,6 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
         labelText: "Mức ưu tiên",
         filled: true,
         fillColor: isDark ? Colors.grey.shade800 : Colors.white,
-        isDense: true,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
@@ -287,7 +220,6 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
   Widget _buildDeadlinePicker() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final iconColor = isDark ? Colors.tealAccent : Colors.teal;
-
     return Row(
       children: [
         Expanded(
@@ -313,7 +245,6 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
     );
   }
 
-  /// 🧩 UI chính
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -325,7 +256,6 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
       appBar: AppBar(
         title: const Text("Quản lý Todos"),
         backgroundColor: primaryColor,
-        elevation: 2,
         actions: [
           IconButton(
             icon: Icon(
@@ -364,6 +294,7 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
               final desc = data["description"] ?? "";
               final priority = data["priority"] ?? "Medium";
               final isCompleted = data["isCompleted"] ?? false;
+              final shared = data["shared"] ?? false;
               final deadline = (data["deadline"] as Timestamp?)?.toDate();
 
               Color priorityColor = Colors.grey;
@@ -373,8 +304,8 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
 
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                elevation: 3,
-                color: cardColor,
+                elevation: shared ? 5 : 2,
+                color: shared ? Colors.teal.shade50 : cardColor,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -411,11 +342,20 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
                                 : Colors.grey[700],
                           ),
                         ),
+                      if (shared)
+                        Text(
+                          "📢 Đang chia sẻ với người dùng",
+                          style: TextStyle(
+                            color: Colors.teal.shade700,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                     ],
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // Toggle hoàn thành
                       IconButton(
                         icon: Icon(
                           isCompleted
@@ -425,10 +365,25 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
                         ),
                         onPressed: () => _toggleComplete(doc.id, isCompleted),
                       ),
+                      // Sửa
                       IconButton(
                         icon: const Icon(Icons.edit, color: Colors.blue),
                         onPressed: () => _editTodo(doc.id, data),
                       ),
+                      // Chia sẻ toggle
+                      IconButton(
+                        icon: Icon(
+                          shared
+                              ? Icons.public_off_rounded
+                              : Icons.public_rounded,
+                          color: shared ? Colors.orange : Colors.teal,
+                        ),
+                        tooltip: shared
+                            ? "Bỏ chia sẻ"
+                            : "Chia sẻ với người dùng",
+                        onPressed: () => _toggleShare(doc.id, shared),
+                      ),
+                      // Xóa
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
                         onPressed: () => _deleteTodo(doc.id, title),

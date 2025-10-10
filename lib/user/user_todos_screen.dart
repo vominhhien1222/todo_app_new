@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../providers/todo_provider.dart';
 import '../models/todo.dart';
 import 'user_detail_screen.dart';
 import 'user_profile_screen.dart';
-import 'user_announcements_screen.dart'; // 👈 import thêm
+import 'user_announcements_screen.dart';
 
 class UserTodosScreen extends StatefulWidget {
   const UserTodosScreen({super.key});
@@ -136,9 +137,6 @@ class _UserTodosScreenState extends State<UserTodosScreen> {
                   itemCount: filteredTodos.length,
                   itemBuilder: (context, index) {
                     final todo = filteredTodos[index];
-                    final isOverdue =
-                        todo.deadline != null &&
-                        todo.deadline!.isBefore(DateTime.now());
 
                     Color priorityColor;
                     switch (todo.priority) {
@@ -160,8 +158,13 @@ class _UserTodosScreenState extends State<UserTodosScreen> {
                         horizontal: 12,
                         vertical: 6,
                       ),
+                      elevation: todo.shared ? 4 : 2,
+                      color: todo.shared ? Colors.teal.shade50 : Colors.white,
                       child: ListTile(
-                        leading: const Icon(Icons.task_alt, color: Colors.teal),
+                        leading: Icon(
+                          todo.shared ? Icons.campaign_rounded : Icons.task_alt,
+                          color: todo.shared ? Colors.teal : Colors.pink,
+                        ),
                         title: Text(
                           todo.title,
                           style: TextStyle(
@@ -169,6 +172,9 @@ class _UserTodosScreenState extends State<UserTodosScreen> {
                             decoration: todo.isCompleted
                                 ? TextDecoration.lineThrough
                                 : null,
+                            color: todo.shared
+                                ? Colors.teal.shade800
+                                : Colors.black87,
                           ),
                         ),
                         subtitle: Column(
@@ -189,7 +195,7 @@ class _UserTodosScreenState extends State<UserTodosScreen> {
                               Text(
                                 "Hạn: ${DateFormat('dd/MM/yyyy').format(todo.deadline!)}",
                                 style: TextStyle(
-                                  color: isOverdue
+                                  color: todo.deadline!.isBefore(DateTime.now())
                                       ? Colors.red
                                       : Colors.grey.shade800,
                                   fontWeight: FontWeight.w500,
@@ -202,9 +208,37 @@ class _UserTodosScreenState extends State<UserTodosScreen> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+                            if (todo.shared)
+                              const Padding(
+                                padding: EdgeInsets.only(top: 4.0),
+                                child: Text(
+                                  "📢 Được chia sẻ bởi Admin",
+                                  style: TextStyle(
+                                    color: Colors.teal,
+                                    fontStyle: FontStyle.italic,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
-                        // 👉 User chỉ xem chi tiết
+                        trailing:
+                            (todo.userId ==
+                                FirebaseAuth.instance.currentUser?.uid)
+                            ? Icon(
+                                todo.isCompleted
+                                    ? Icons.check_box
+                                    : Icons.check_box_outline_blank,
+                                color: Colors.teal,
+                              )
+                            : const Text(
+                                "👁️ Chia sẻ",
+                                style: TextStyle(
+                                  color: Colors.teal,
+                                  fontSize: 12,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
                         onTap: () {
                           Navigator.push(
                             context,

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:todo_app_new/providers/car_provider.dart';
+import 'package:todo_app_new/providers/cart_provider.dart';
+import 'package:todo_app_new/providers/dashboard_provider.dart';
+import 'package:todo_app_new/providers/order_provider.dart';
 
 import 'firebase_options.dart';
 import 'providers/todo_provider.dart';
@@ -20,6 +24,10 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => TodoProvider()),
         ChangeNotifierProvider(create: (_) => AdminUsersProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => CarProvider()),
+        ChangeNotifierProvider(create: (_) => CartProvider()),
+        ChangeNotifierProvider(create: (_) => OrderProvider()),
+        ChangeNotifierProvider(create: (_) => DashboardProvider()),
       ],
       child: const MyApp(),
     ),
