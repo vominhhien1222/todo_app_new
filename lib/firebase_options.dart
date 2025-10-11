@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -59,4 +56,14 @@ class DefaultFirebaseOptions {
     projectId: 'todo-app-new-1823a',
     storageBucket: 'todo-app-new-1823a.firebasestorage.app',
   );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyDvGDFsle7-BG20ewXPa9JzONSvnY3uNuM',
+    appId: '1:708158139331:web:d26d06900cd0ebc226ab76',
+    messagingSenderId: '708158139331',
+    projectId: 'todo-app-new-1823a',
+    authDomain: 'todo-app-new-1823a.firebaseapp.com',
+    storageBucket: 'todo-app-new-1823a.firebasestorage.app',
+  );
+
 }
