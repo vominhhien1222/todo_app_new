@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'user_home_screen.dart';
 import 'user_todos_screen.dart';
 import 'user_announcements_screen.dart';
+import 'cart_screen.dart';
+import 'user_cars_screen.dart';
 
 class UserMainScreen extends StatefulWidget {
   const UserMainScreen({super.key});
@@ -13,7 +15,6 @@ class UserMainScreen extends StatefulWidget {
 class _UserMainScreenState extends State<UserMainScreen>
     with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
-
   late final PageController _pageController;
 
   @override
@@ -28,12 +29,10 @@ class _UserMainScreenState extends State<UserMainScreen>
     super.dispose();
   }
 
-  /// 🔹 Chuyển trang bằng PageView (có animation mượt)
   void _onPageChanged(int index) {
     setState(() => _currentIndex = index);
   }
 
-  /// 🔹 Khi người dùng bấm icon dưới
   void _onItemTapped(int index) {
     setState(() => _currentIndex = index);
     _pageController.animateToPage(
@@ -50,19 +49,19 @@ class _UserMainScreenState extends State<UserMainScreen>
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[900] : Colors.teal.shade50,
 
-      // 🧭 Dùng PageView để có animation trượt mượt khi chuyển tab
       body: PageView(
         controller: _pageController,
         physics: const BouncingScrollPhysics(),
         onPageChanged: _onPageChanged,
         children: const [
           UserHomeScreen(), // 🏠 Trang chủ
-          UserTodosScreen(), // ✅ Danh sách công việc
+          UserTodosScreen(), // ✅ Công việc
           UserAnnouncementsScreen(), // 📢 Thông báo
+          CartScreen(), // 🛒 Giỏ hàng
+          UserCarsScreen(), // 🚗 Xe của tôi
         ],
       ),
 
-      // 🌈 Thanh điều hướng dưới
       bottomNavigationBar: NavigationBarTheme(
         data: NavigationBarThemeData(
           indicatorColor: isDark
@@ -101,6 +100,16 @@ class _UserMainScreenState extends State<UserMainScreen>
                 color: Colors.teal,
               ),
               label: "Thông báo",
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.shopping_cart_outlined),
+              selectedIcon: Icon(Icons.shopping_cart, color: Colors.teal),
+              label: "Giỏ hàng",
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.directions_car_outlined),
+              selectedIcon: Icon(Icons.directions_car, color: Colors.teal),
+              label: "Xe của tôi",
             ),
           ],
         ),
