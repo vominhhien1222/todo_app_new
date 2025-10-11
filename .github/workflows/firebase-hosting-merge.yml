@@ -15,6 +15,8 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.13.9' # ✅ bắt buộc phải >= 3.9
+          cache: false # ⚠️ Thêm dòng này để disable cache Flutter cũ
+
 
       - name: 📦 Install dependencies
         run: flutter pub get
