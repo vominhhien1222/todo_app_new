@@ -14,7 +14,7 @@ jobs:
       - name: 🔧 Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.13.9' # ✅ bắt buộc phải >= 3.9
+          flutter-version: '3.13.9'
           cache: false
 
 
