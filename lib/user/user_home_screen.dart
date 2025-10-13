@@ -15,21 +15,25 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isTablet = size.width > 600; // ✅ responsive cho tablet
+
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
-      body: CustomScrollView(
-        slivers: [
-          // 🔹 AppBar có ô tìm kiếm
-          SliverAppBar(
-            floating: true,
-            pinned: false,
-            elevation: 0,
-            backgroundColor: Colors.white,
-            expandedHeight: 60,
-            flexibleSpace: Padding(
-              padding: const EdgeInsets.only(top: 8.0, left: 12, right: 12),
-              child: Container(
-                height: 46,
+      body: SafeArea(
+        bottom: true,
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // 🔹 AppBar có thanh tìm kiếm
+            SliverAppBar(
+              floating: true,
+              pinned: false,
+              backgroundColor: Colors.white,
+              elevation: 1,
+              toolbarHeight: 65,
+              title: Container(
+                height: 44,
                 decoration: BoxDecoration(
                   color: Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(12),
@@ -47,191 +51,140 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                 ),
               ),
             ),
-          ),
 
-          // 🔹 Banner quảng cáo
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Stack(
-                  alignment: Alignment.centerLeft,
-                  children: [
-                    Image.asset(
+            // 🔹 Banner quảng cáo
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: AspectRatio(
+                    aspectRatio: 16 / 6.5, // ✅ Giữ tỉ lệ banner đúng chuẩn
+                    child: Image.asset(
                       "assets/images/news_banner.jpg",
                       fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: 160,
                       errorBuilder: (_, __, ___) => Container(
-                        height: 160,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.teal.shade300,
-                              Colors.cyan.shade400,
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                        ),
+                        color: Colors.teal.shade100,
+                        child: const Center(child: Text("Banner quảng cáo")),
                       ),
                     ),
-                    Container(
-                      height: 160,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.black.withOpacity(0.3),
-                            Colors.black.withOpacity(0.1),
-                          ],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                      ),
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            "Xe mới cập nhật hôm nay 🚗",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          SizedBox(height: 6),
-                          Text(
-                            "Khám phá các mẫu xe mới nhất trong cửa hàng",
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.white70,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
-          ),
 
-          // 🔹 Bản tin / Thông báo nhỏ
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.teal.shade50,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.teal.shade100),
+            // 🔹 Bản tin / Thông báo
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
                 ),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "📢 Thông báo: Ưu đãi 10% cho đơn hàng đầu tiên",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F6F3),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.teal.shade100),
+                  ),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "📢 Ưu đãi 10% cho đơn hàng đầu tiên!",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      "Chương trình áp dụng đến hết tuần này!",
-                      style: TextStyle(fontSize: 13, color: Colors.black54),
-                    ),
-                  ],
+                      SizedBox(height: 4),
+                      Text(
+                        "Áp dụng đến hết tuần này nhé 💚",
+                        style: TextStyle(fontSize: 13, color: Colors.black54),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 12)),
+            const SliverToBoxAdapter(child: SizedBox(height: 4)),
 
-          // 🔹 StreamBuilder: lấy danh sách xe từ Firestore
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('cars')
-                .orderBy('createdAt', descending: true)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const SliverToBoxAdapter(
-                  child: Center(
+            // 🔹 Lấy danh sách xe từ Firestore
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('cars')
+                  .orderBy('createdAt', descending: true)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SliverToBoxAdapter(
                     child: Padding(
-                      padding: EdgeInsets.all(20),
-                      child: CircularProgressIndicator(),
+                      padding: EdgeInsets.all(40),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                  );
+                }
+
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.all(40),
+                      child: Center(child: Text("Chưa có xe nào 😢")),
+                    ),
+                  );
+                }
+
+                final cars = snapshot.data!.docs
+                    .map(
+                      (doc) => Car.fromMap(
+                        doc.data() as Map<String, dynamic>,
+                        doc.id,
+                      ),
+                    )
+                    .where(
+                      (car) => car.name.toLowerCase().contains(
+                        searchKeyword.toLowerCase(),
+                      ),
+                    )
+                    .toList();
+
+                if (cars.isEmpty) {
+                  return const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.all(40),
+                      child: Center(
+                        child: Text("Không tìm thấy xe phù hợp 🔍"),
+                      ),
+                    ),
+                  );
+                }
+
+                return SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  sliver: SliverGrid(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final car = cars[index];
+                      return _CarCard(car: car);
+                    }, childCount: cars.length),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: isTablet ? 3 : 2, // ✅ responsive
+                      mainAxisSpacing: 14,
+                      crossAxisSpacing: 14,
+                      childAspectRatio: isTablet ? 0.8 : 0.72, // ✅ cân layout
                     ),
                   ),
                 );
-              }
-
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return const SliverToBoxAdapter(
-                  child: Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(20),
-                      child: Text("Chưa có xe nào 😢"),
-                    ),
-                  ),
-                );
-              }
-
-              final cars = snapshot.data!.docs
-                  .map(
-                    (doc) =>
-                        Car.fromMap(doc.data() as Map<String, dynamic>, doc.id),
-                  )
-                  .where(
-                    (car) => car.name.toLowerCase().contains(
-                      searchKeyword.toLowerCase(),
-                    ),
-                  )
-                  .toList();
-
-              if (cars.isEmpty) {
-                return const SliverToBoxAdapter(
-                  child: Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(20),
-                      child: Text("Không tìm thấy xe phù hợp 🔍"),
-                    ),
-                  ),
-                );
-              }
-
-              return SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                sliver: SliverGrid(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final car = cars[index];
-                    return _CarCard(car: car);
-                  }, childCount: cars.length),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 0.8,
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-/// ✅ Thẻ hiển thị thông tin xe (OKXE style)
+/// ✅ Thẻ hiển thị thông tin xe (chuẩn bố cục OKXE)
 class _CarCard extends StatelessWidget {
   final Car car;
 
@@ -248,20 +201,20 @@ class _CarCard extends StatelessWidget {
           // Ảnh xe
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Image.network(
-              car.imageUrl,
-              height: 100,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                height: 100,
-                color: Colors.grey.shade300,
-                child: const Icon(Icons.directions_car, size: 40),
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Image.network(
+                car.imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  color: Colors.grey.shade300,
+                  child: const Icon(Icons.directions_car, size: 40),
+                ),
               ),
             ),
           ),
 
-          // Thông tin xe
+          // Nội dung
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(
@@ -276,7 +229,7 @@ class _CarCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   car.brand,
                   style: const TextStyle(fontSize: 12, color: Colors.teal),
@@ -289,7 +242,7 @@ class _CarCard extends StatelessWidget {
                     color: Colors.black87,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   car.description.isNotEmpty
                       ? car.description

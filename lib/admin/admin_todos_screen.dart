@@ -20,7 +20,7 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
   DateTime? _deadline;
   bool _shared = false;
 
-  /// ✅ Thêm Todo
+  /// ✅ Thêm Todo (đã fix lỗi "Bad state: No element")
   Future<void> _addTodo() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -39,21 +39,28 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
         "isCompleted": false,
         "createdAt": FieldValue.serverTimestamp(),
         "userId": user?.uid,
-        "shared": _shared, // ✅ Bắt đầu false trừ khi admin bật
+        "shared": _shared,
       });
 
       _clearFields();
-      if (mounted) {
+
+      if (!mounted) return;
+
+      // ✅ Chỉ pop khi đang trong dialog
+      if (Navigator.canPop(context)) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("✅ Đã thêm Todo mới")));
       }
-    } catch (e, s) {
-      print("❌ Add error: $e\n$s");
+
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("Lỗi khi thêm Todo: $e")));
+      ).showSnackBar(const SnackBar(content: Text("✅ Đã thêm Todo mới")));
+    } catch (e, s) {
+      print("❌ Add error: $e\n$s");
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Lỗi khi thêm Todo: $e")));
+      }
     }
   }
 
@@ -355,7 +362,6 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Toggle hoàn thành
                       IconButton(
                         icon: Icon(
                           isCompleted
@@ -365,12 +371,10 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
                         ),
                         onPressed: () => _toggleComplete(doc.id, isCompleted),
                       ),
-                      // Sửa
                       IconButton(
                         icon: const Icon(Icons.edit, color: Colors.blue),
                         onPressed: () => _editTodo(doc.id, data),
                       ),
-                      // Chia sẻ toggle
                       IconButton(
                         icon: Icon(
                           shared
@@ -383,7 +387,6 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
                             : "Chia sẻ với người dùng",
                         onPressed: () => _toggleShare(doc.id, shared),
                       ),
-                      // Xóa
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
                         onPressed: () => _deleteTodo(doc.id, title),
