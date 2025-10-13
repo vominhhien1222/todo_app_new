@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../models/car.dart';
 
 class UserHomeScreen extends StatefulWidget {
   const UserHomeScreen({super.key});
@@ -8,376 +10,298 @@ class UserHomeScreen extends StatefulWidget {
 }
 
 class _UserHomeScreenState extends State<UserHomeScreen> {
-  // Mock dữ liệu bản tin: có title, subtitle, tag để lên màu chip.
-  final List<Map<String, String>> _news = [
-    {
-      "title": "Cập nhật Todos: Hoàn thành 3 task trước 17:00",
-      "subtitle": "Check lại ưu tiên High/Medium để kịp deadline hôm nay.",
-      "tag": "Todos",
-    },
-    {
-      "title": "Thông báo: Bảo trì hệ thống 23:00–23:30",
-      "subtitle": "Ứng dụng có thể thoát ra trong thời gian cập nhật.",
-      "tag": "Announcement",
-    },
-    {
-      "title": "Mẹo năng suất: Quy tắc 2 phút",
-      "subtitle": "Việc nào < 2 phút, làm ngay để đỡ tồn đọng.",
-      "tag": "Tips",
-    },
-  ];
-
-  // Giả lập refresh 800ms cho mượt (thay bằng load API/Firestore sau)
-  Future<void> _onRefresh() async {
-    await Future.delayed(const Duration(milliseconds: 800));
-    if (!mounted) return;
-    setState(() {
-      _news.shuffle(); // chỉ đổi thứ tự , sau dùng dữ liệu thật
-    });
-  }
-
-  String _greeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 11) return "Chào buổi sáng ☀️";
-    if (hour < 14) return "Buổi trưa vui vẻ 🥗";
-    if (hour < 19) return "Buổi chiều năng suất ⚡";
-    return "Buổi tối thư giãn 🌙";
-    // Bạn có thể thay bằng tên user: "Xin chào, Thảo 👋"
-  }
+  final TextEditingController _searchController = TextEditingController();
+  String searchKeyword = "";
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    // Màu chủ đạo nhẹ nhàng, pha trộn để "tươi tươi" (tránh 1 màu).
-    // - Teal (màu thương hiệu)
-    // - Indigo/Cyan để tạo chiều sâu
-    final Color accent = isDark ? Colors.tealAccent : Colors.teal;
-    final Color subtle = isDark ? Colors.indigo.shade300 : Colors.indigo;
-    final Color cyanish = isDark ? Colors.cyanAccent : Colors.cyan.shade400;
-
     return Scaffold(
-      // AppBar nhẹ, bạn có thể bỏ nếu dùng BottomNav có tiêu đề riêng
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: theme.colorScheme.background,
-        title: const Text("Trang chính"),
-        centerTitle: false,
-      ),
-
-      // Kéo xuống refresh list
-      body: RefreshIndicator(
-        color: accent,
-        onRefresh: _onRefresh,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-          children: [
-            // -----------------------
-            // 1) Banner JPG + overlay
-            // -----------------------
-            _BannerWithOverlay(
-              isDark: isDark,
-              accent: accent,
-              cyanish: cyanish,
-              subtle: subtle,
-              // Nếu thiếu asset => fallback bằng gradient
-              assetPath: "assets/images/news_banner.jpg",
-            ),
-            const SizedBox(height: 16),
-
-            // -----------------------
-            // 2) Lời chào (greeting)
-            // -----------------------
-            Text(
-              _greeting(),
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
+      backgroundColor: Colors.grey.shade100,
+      body: CustomScrollView(
+        slivers: [
+          // 🔹 AppBar có ô tìm kiếm
+          SliverAppBar(
+            floating: true,
+            pinned: false,
+            elevation: 0,
+            backgroundColor: Colors.white,
+            expandedHeight: 60,
+            flexibleSpace: Padding(
+              padding: const EdgeInsets.only(top: 8.0, left: 12, right: 12),
+              child: Container(
+                height: 46,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (value) =>
+                      setState(() => searchKeyword = value.trim()),
+                  decoration: const InputDecoration(
+                    hintText: "Tìm xe ngay 👋",
+                    prefixIcon: Icon(Icons.search),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.only(top: 12),
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 6),
-            Text(
-              "Cùng mình điểm qua một số cập nhật mới nhất nhé.",
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
+          ),
+
+          // 🔹 Banner quảng cáo
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Stack(
+                  alignment: Alignment.centerLeft,
+                  children: [
+                    Image.asset(
+                      "assets/images/news_banner.jpg",
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: 160,
+                      errorBuilder: (_, __, ___) => Container(
+                        height: 160,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.teal.shade300,
+                              Colors.cyan.shade400,
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      height: 160,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.black.withOpacity(0.3),
+                            Colors.black.withOpacity(0.1),
+                          ],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                      ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Xe mới cập nhật hôm nay 🚗",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          SizedBox(height: 6),
+                          Text(
+                            "Khám phá các mẫu xe mới nhất trong cửa hàng",
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white70,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 16),
+          ),
 
-            // -----------------------
-            // 3) Dòng “nhanh tay” (quick chips)
-            //    => tạo điểm nhấn màu mè hơn 1 chút cho tươi
-            // -----------------------
-            _QuickActionChips(accent: accent, cyanish: cyanish, subtle: subtle),
-            const SizedBox(height: 16),
-
-            // -----------------------
-            // 4) Danh sách BẢN TIN (Cards)
-            // -----------------------
-            Text(
-              "Bản tin gần đây",
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
+          // 🔹 Bản tin / Thông báo nhỏ
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.teal.shade50,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.teal.shade100),
+                ),
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "📢 Thông báo: Ưu đãi 10% cho đơn hàng đầu tiên",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      "Chương trình áp dụng đến hết tuần này!",
+                      style: TextStyle(fontSize: 13, color: Colors.black54),
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 10),
+          ),
 
-            // List card tin tức
-            ..._news.map(
-              (item) => _NewsCard(
-                title: item["title"]!,
-                subtitle: item["subtitle"]!,
-                tag: item["tag"]!,
-                accent: accent,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+          const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-/// Banner có:
-/// - Ảnh PNG (assetPath)
-/// - Gradient mờ overlay (teal + cyan + indigo) cho "tươi tươi"
-/// - Fallback: nếu lỗi asset => hiển thị gradient thay thế (không crash)
-class _BannerWithOverlay extends StatelessWidget {
-  const _BannerWithOverlay({
-    required this.isDark,
-    required this.accent,
-    required this.cyanish,
-    required this.subtle,
-    required this.assetPath,
-  });
-
-  final bool isDark;
-  final Color accent;
-  final Color cyanish;
-  final Color subtle;
-  final String assetPath;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
-      child: Stack(
-        alignment: Alignment.centerLeft,
-        children: [
-          // Ảnh PNG làm nền (errorBuilder => fallback)
-          AspectRatio(
-            aspectRatio: 16 / 9,
-            child: Image.asset(
-              assetPath,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) {
-                // Nếu thiếu ảnh, dùng gradient thay thế
-                return Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: isDark
-                          ? [Colors.teal.shade900, Colors.indigo.shade900]
-                          : [Colors.teal.shade400, Colors.cyan.shade300],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+          // 🔹 StreamBuilder: lấy danh sách xe từ Firestore
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('cars')
+                .orderBy('createdAt', descending: true)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const SliverToBoxAdapter(
+                  child: Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child: CircularProgressIndicator(),
                     ),
                   ),
                 );
-              },
-            ),
-          ),
+              }
 
-          // Overlay gradient mờ (tạo chiều sâu + dễ đọc chữ)
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    // trộn nhẹ teal + indigo + transparent
-                    accent.withOpacity(isDark ? 0.30 : 0.20),
-                    subtle.withOpacity(isDark ? 0.25 : 0.12),
-                    Colors.transparent,
-                  ],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-              ),
-            ),
-          ),
-
-          // Text giới thiệu
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: RichText(
-              text: TextSpan(
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  shadows: const [
-                    Shadow(
-                      color: Colors.black26,
-                      blurRadius: 6,
-                      offset: Offset(0, 2),
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return const SliverToBoxAdapter(
+                  child: Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Text("Chưa có xe nào 😢"),
                     ),
-                  ],
-                ),
-                children: const [
-                  TextSpan(text: "Bản tin hôm nay\n"),
-                  TextSpan(
-                    text: "Cập nhật mới, tips hay, và thông báo hệ thống",
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
                   ),
-                ],
+                );
+              }
+
+              final cars = snapshot.data!.docs
+                  .map(
+                    (doc) =>
+                        Car.fromMap(doc.data() as Map<String, dynamic>, doc.id),
+                  )
+                  .where(
+                    (car) => car.name.toLowerCase().contains(
+                      searchKeyword.toLowerCase(),
+                    ),
+                  )
+                  .toList();
+
+              if (cars.isEmpty) {
+                return const SliverToBoxAdapter(
+                  child: Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Text("Không tìm thấy xe phù hợp 🔍"),
+                    ),
+                  ),
+                );
+              }
+
+              return SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                sliver: SliverGrid(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final car = cars[index];
+                    return _CarCard(car: car);
+                  }, childCount: cars.length),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 0.8,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// ✅ Thẻ hiển thị thông tin xe (OKXE style)
+class _CarCard extends StatelessWidget {
+  final Car car;
+
+  const _CarCard({required this.car});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 1.5,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Ảnh xe
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: Image.network(
+              car.imageUrl,
+              height: 100,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                height: 100,
+                color: Colors.grey.shade300,
+                child: const Icon(Icons.directions_car, size: 40),
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
 
-/// Dải chip hành động nhanh cho cảm giác "tươi" & “app-like”
-/// - Màu sắc phối: teal/cyan/indigo nhạt (có thay đổi light/dark)
-class _QuickActionChips extends StatelessWidget {
-  const _QuickActionChips({
-    required this.accent,
-    required this.cyanish,
-    required this.subtle,
-  });
-
-  final Color accent;
-  final Color cyanish;
-  final Color subtle;
-
-  @override
-  Widget build(BuildContext context) {
-    final chipStyle = Theme.of(
-      context,
-    ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600);
-
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        _ChipPill(
-          text: "Lộ trình hôm nay",
-          color: accent,
-          textStyle: chipStyle,
-        ),
-        _ChipPill(text: "Ưu tiên cao", color: cyanish, textStyle: chipStyle),
-        _ChipPill(text: "Thông báo mới", color: subtle, textStyle: chipStyle),
-      ],
-    );
-  }
-}
-
-class _ChipPill extends StatelessWidget {
-  const _ChipPill({required this.text, required this.color, this.textStyle});
-
-  final String text;
-  final Color color;
-  final TextStyle? textStyle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.16),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withOpacity(0.28)),
-      ),
-      child: Text(
-        text,
-        style: (textStyle ?? const TextStyle()).copyWith(color: color),
-      ),
-    );
-  }
-}
-
-/// Card hiển thị 1 bản tin:
-/// - Tag chip (màu theo accent)
-/// - Title + subtitle
-/// - Nền pastel nhạt tùy theme
-class _NewsCard extends StatelessWidget {
-  const _NewsCard({
-    required this.title,
-    required this.subtitle,
-    required this.tag,
-    required this.accent,
-  });
-
-  final String title;
-  final String subtitle;
-  final String tag;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.blueGrey.shade900 : Colors.teal.shade50,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withOpacity(0.25)
-                : Colors.teal.shade200.withOpacity(0.25),
-            blurRadius: 10,
-            offset: const Offset(0, 6),
-          ),
-        ],
-        border: Border.all(
-          color: isDark ? Colors.white10 : Colors.teal.shade100,
-        ),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-        leading: CircleAvatar(
-          backgroundColor: accent.withOpacity(0.18),
-          foregroundColor: accent,
-          child: const Icon(Icons.article_outlined),
-        ),
-        title: Text(
-          title,
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4.0),
-          child: Text(subtitle, style: theme.textTheme.bodySmall),
-        ),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: accent.withOpacity(0.14),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: accent.withOpacity(0.25)),
-          ),
-          child: Text(
-            tag,
-            style: TextStyle(
-              color: accent,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-              letterSpacing: 0.2,
+          // Thông tin xe
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  car.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  car.brand,
+                  style: const TextStyle(fontSize: 12, color: Colors.teal),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "${car.price.toStringAsFixed(0)} ₫",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  car.description.isNotEmpty
+                      ? car.description
+                      : "Không có mô tả",
+                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ),
-        ),
-        onTap: () {
-          // TODO: sau này điều hướng sang user_detail_screen.dart (Hero + slide)
-          // Navigator.push(context, MaterialPageRoute(builder: (_) => const UserDetailScreen(...)));
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text("Đang mở: $tag")));
-        },
+        ],
       ),
     );
   }

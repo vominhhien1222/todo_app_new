@@ -45,11 +45,12 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
-  /// ➕ Tạo đơn hàng mới
+  /// ➕ Tạo đơn hàng mới (có thông tin người mua)
   Future<void> placeOrder({
     required String userId,
     required List<Car> cars,
     required double totalAmount,
+    Map<String, dynamic>? buyerInfo, // ✅ THÊM PARAM NÀY
   }) async {
     try {
       final order = my.Order(
@@ -61,7 +62,13 @@ class OrderProvider extends ChangeNotifier {
         createdAt: DateTime.now(),
       );
 
-      await _firestore.collection('orders').add(order.toMap());
+      // ✅ Lưu lên Firestore
+      await _firestore.collection('orders').add({
+        ...order.toMap(), // giữ nguyên thông tin đơn hàng gốc
+        'buyerInfo': buyerInfo, // ✅ thêm thông tin người mua
+      });
+
+      notifyListeners();
     } catch (e) {
       print("❌ Lỗi tạo đơn hàng: $e");
     }

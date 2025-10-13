@@ -7,6 +7,7 @@ class Order {
   final double totalAmount;
   final String status; // 'pending', 'approved', 'shipped'
   final DateTime createdAt;
+  final Map<String, dynamic>? buyerInfo;
 
   Order({
     required this.id,
@@ -15,6 +16,7 @@ class Order {
     required this.totalAmount,
     required this.status,
     required this.createdAt,
+    this.buyerInfo,
   });
 
   factory Order.fromMap(Map<String, dynamic> map, String id) {
@@ -28,6 +30,7 @@ class Order {
       totalAmount: (map['totalAmount'] ?? 0).toDouble(),
       status: map['status'] ?? 'pending',
       createdAt: DateTime.tryParse(map['createdAt'] ?? '') ?? DateTime.now(),
+      buyerInfo: map['buyerInfo'],
     );
   }
 
@@ -38,6 +41,7 @@ class Order {
       'totalAmount': totalAmount,
       'status': status,
       'createdAt': createdAt.toIso8601String(),
+      'buyerInfo': buyerInfo,
     };
   }
 }

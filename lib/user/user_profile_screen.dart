@@ -5,6 +5,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../auth/login_via_email.dart'; // 👈 để logout quay lại login
+import 'my_orders_screen.dart'; // ✅ THÊM DÒNG NÀY
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -152,6 +153,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     ),
                     const SizedBox(height: 30),
 
+                    // 🔹 Nút đổi ảnh đại diện
                     ElevatedButton.icon(
                       onPressed: _pickAndUploadAvatar,
                       icon: const Icon(Icons.camera_alt),
@@ -167,6 +169,30 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     ),
                     const SizedBox(height: 20),
 
+                    // ✅ Nút “Đơn hàng của tôi”
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const MyOrdersScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.shopping_bag_outlined),
+                      label: const Text("Đơn hàng của tôi"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.purple,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        minimumSize: const Size(double.infinity, 50),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // 🔹 Nút đăng xuất
                     ElevatedButton.icon(
                       onPressed: _logout,
                       icon: const Icon(Icons.logout),

@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import '../../providers/order_provider.dart';
 import '../../models/order.dart' as my;
 
-class AdminOrdersScreen extends StatefulWidget {
-  const AdminOrdersScreen({super.key});
+class MyOrdersScreen extends StatefulWidget {
+  const MyOrdersScreen({super.key});
 
   @override
-  State<AdminOrdersScreen> createState() => _AdminOrdersScreenState();
+  State<MyOrdersScreen> createState() => _MyOrdersScreenState();
 }
 
-class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
+class _MyOrdersScreenState extends State<MyOrdersScreen> {
   bool _isLoading = true;
+  List<my.Order> _orders = [];
 
   @override
   void initState() {
@@ -20,49 +22,62 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
   }
 
   Future<void> _loadOrders() async {
-    await Provider.of<OrderProvider>(context, listen: false).fetchAllOrders();
-    setState(() => _isLoading = false);
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final fetchedOrders = await Provider.of<OrderProvider>(
+      context,
+      listen: false,
+    ).fetchOrdersByUser(user.uid);
+
+    setState(() {
+      _orders = fetchedOrders;
+      _isLoading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final orderProvider = Provider.of<OrderProvider>(context);
-    final orders = orderProvider.orders;
-
     return Scaffold(
-      appBar: AppBar(title: const Text("Quản lý đơn hàng"), centerTitle: true),
+      appBar: AppBar(title: const Text("Đơn hàng của tôi"), centerTitle: true),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : orders.isEmpty
-          ? const Center(child: Text("Không có đơn hàng nào"))
+          : _orders.isEmpty
+          ? const Center(child: Text("Bạn chưa có đơn hàng nào"))
           : ListView.builder(
-              itemCount: orders.length,
+              itemCount: _orders.length,
               itemBuilder: (_, index) {
-                final my.Order order = orders[index];
+                final order = _orders[index];
 
                 return Card(
                   margin: const EdgeInsets.all(12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  elevation: 4,
                   child: ExpansionTile(
                     title: Text(
                       "🧾 Mã đơn: ${order.id.substring(0, 6)}...",
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("👤 Người dùng: ${order.userId}"),
                         Text(
-                          "💰 Tổng tiền: ${order.totalAmount.toStringAsFixed(0)} VND",
+                          "Tổng tiền: ${order.totalAmount.toStringAsFixed(0)} VND",
+                          style: const TextStyle(fontWeight: FontWeight.w500),
                         ),
-                        Text("🚚 Trạng thái: ${order.status}"),
+                        Text("Trạng thái: ${order.status}"),
+                        Text(
+                          "Ngày đặt: ${order.createdAt.day}/${order.createdAt.month}/${order.createdAt.year}",
+                          style: const TextStyle(color: Colors.grey),
+                        ),
                       ],
                     ),
                     children: [
-                      if (order.buyerInfo != null) // ✅ Thông tin người mua
+                      if (order.buyerInfo != null)
                         Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
@@ -70,9 +85,9 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                           ),
                           child: Container(
                             width: double.infinity,
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: Colors.green.withOpacity(0.05),
+                              color: Colors.blue.withOpacity(0.05),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Column(
@@ -102,10 +117,6 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                             ),
                           ),
                         ),
-
-                      const SizedBox(height: 6),
-
-                      // ✅ Danh sách xe trong đơn
                       ...order.cars.map(
                         (car) => ListTile(
                           leading: ClipRRect(
@@ -125,50 +136,6 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                           ),
                         ),
                       ),
-
-                      const Divider(),
-
-                      // ✅ Phần cập nhật trạng thái đơn
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            DropdownButton<String>(
-                              value: order.status,
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'pending',
-                                  child: Text("⏳ Chờ duyệt"),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'approved',
-                                  child: Text("✅ Đã duyệt"),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'shipped',
-                                  child: Text("🚚 Đã giao"),
-                                ),
-                              ],
-                              onChanged: (value) async {
-                                if (value == null) return;
-
-                                await Provider.of<OrderProvider>(
-                                  context,
-                                  listen: false,
-                                ).updateStatus(order.id, value);
-
-                                _loadOrders();
-                              },
-                            ),
-                            Text(
-                              "${order.createdAt.day}/${order.createdAt.month}/${order.createdAt.year}",
-                              style: const TextStyle(color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
                     ],
                   ),
                 );

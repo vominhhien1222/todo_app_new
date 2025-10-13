@@ -5,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../providers/todo_provider.dart';
 import '../models/todo.dart';
 import 'user_detail_screen.dart';
-import 'user_profile_screen.dart';
 import 'user_announcements_screen.dart';
 
 class UserTodosScreen extends StatefulWidget {
@@ -37,10 +36,7 @@ class _UserTodosScreenState extends State<UserTodosScreen> {
         title: const Text("Danh Sách Công Việc"),
         centerTitle: true,
         backgroundColor: const Color.fromARGB(255, 240, 96, 185),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
+        // ✅ Xóa nút back và icon user profile
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications),
@@ -54,18 +50,9 @@ class _UserTodosScreenState extends State<UserTodosScreen> {
               );
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.person),
-            tooltip: "Hồ Sơ Cá Nhân",
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const UserProfileScreen()),
-              );
-            },
-          ),
         ],
       ),
+
       body: Column(
         children: [
           // 🔽 Dropdown chọn category

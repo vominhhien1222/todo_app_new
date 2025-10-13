@@ -39,19 +39,17 @@ class TodoProvider extends ChangeNotifier {
 
     Query query = _firestore
         .collection('todos')
+        .where(
+          Filter.or(
+            Filter("userId", isEqualTo: user.uid),
+            Filter("shared", isEqualTo: true),
+          ),
+        ) // ✅ Lấy todo của user hoặc được chia sẻ
         .orderBy('createdAt', descending: true);
 
     if (category != "Tất cả") {
       query = query.where("category", isEqualTo: category);
     }
-
-    // ✅ Lọc theo userId hoặc shared = true
-    query = query.where(
-      Filter.or(
-        Filter('userId', isEqualTo: user.uid),
-        Filter('shared', isEqualTo: true),
-      ),
-    );
 
     return query.snapshots().map((snapshot) {
       return snapshot.docs

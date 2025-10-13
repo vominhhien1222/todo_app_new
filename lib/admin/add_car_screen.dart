@@ -37,13 +37,22 @@ class _AddCarScreenState extends State<AddCarScreen> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate() || _imageFile == null) return;
+    if (!_formKey.currentState!.validate() || _imageFile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("⚠️ Vui lòng nhập đầy đủ thông tin và chọn ảnh"),
+        ),
+      );
+      return;
+    }
 
     setState(() => _isUploading = true);
+
     try {
       final imageUrl = await _uploadImage(_imageFile!);
+
       final car = Car(
-        id: '', // sẽ được tạo trong Firestore
+        id: '',
         name: _nameController.text.trim(),
         brand: _brandController.text.trim(),
         price: double.tryParse(_priceController.text) ?? 0,
@@ -51,13 +60,19 @@ class _AddCarScreenState extends State<AddCarScreen> {
         imageUrl: imageUrl,
         createdAt: DateTime.now(),
       );
+
       await Provider.of<CarProvider>(context, listen: false).addCar(car);
-      if (mounted) Navigator.pop(context); // quay về sau khi thêm
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("✅ Thêm xe thành công")));
+      Navigator.pop(context); // Quay lại màn danh sách xe
     } catch (e) {
       print("❌ Lỗi khi thêm xe: $e");
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Thêm xe thất bại")));
+      ).showSnackBar(const SnackBar(content: Text("❌ Thêm xe thất bại")));
     } finally {
       setState(() => _isUploading = false);
     }
@@ -95,20 +110,20 @@ class _AddCarScreenState extends State<AddCarScreen> {
                     ),
                     TextFormField(
                       controller: _brandController,
-                      decoration: const InputDecoration(labelText: "Hãng"),
+                      decoration: const InputDecoration(labelText: "Hãng xe"),
                       validator: (val) =>
-                          val == null || val.isEmpty ? "Nhập hãng" : null,
+                          val == null || val.isEmpty ? "Nhập hãng xe" : null,
                     ),
                     TextFormField(
                       controller: _priceController,
                       decoration: const InputDecoration(labelText: "Giá (VND)"),
                       keyboardType: TextInputType.number,
                       validator: (val) =>
-                          val == null || val.isEmpty ? "Nhập giá" : null,
+                          val == null || val.isEmpty ? "Nhập giá xe" : null,
                     ),
                     TextFormField(
                       controller: _descController,
-                      decoration: const InputDecoration(labelText: "Mô tả"),
+                      decoration: const InputDecoration(labelText: "Mô tả xe"),
                       maxLines: 3,
                     ),
                     const SizedBox(height: 20),

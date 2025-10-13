@@ -4,6 +4,7 @@ import 'user_todos_screen.dart';
 import 'user_announcements_screen.dart';
 import 'cart_screen.dart';
 import 'user_cars_screen.dart';
+import 'user_profile_screen.dart'; // ✅ THÊM import này
 
 class UserMainScreen extends StatefulWidget {
   const UserMainScreen({super.key});
@@ -49,6 +50,7 @@ class _UserMainScreenState extends State<UserMainScreen>
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[900] : Colors.teal.shade50,
 
+      // ✅ Thêm UserProfileScreen vào cuối PageView
       body: PageView(
         controller: _pageController,
         physics: const BouncingScrollPhysics(),
@@ -58,7 +60,8 @@ class _UserMainScreenState extends State<UserMainScreen>
           UserTodosScreen(), // ✅ Công việc
           UserAnnouncementsScreen(), // 📢 Thông báo
           CartScreen(), // 🛒 Giỏ hàng
-          UserCarsScreen(), // 🚗 Xe của tôi
+          UserCarsScreen(), // 🚗 Danh mục xe
+          UserProfileScreen(), // 👤 Hồ sơ người dùng ✅ MỚI
         ],
       ),
 
@@ -109,7 +112,12 @@ class _UserMainScreenState extends State<UserMainScreen>
             NavigationDestination(
               icon: Icon(Icons.directions_car_outlined),
               selectedIcon: Icon(Icons.directions_car, color: Colors.teal),
-              label: "Xe của tôi",
+              label: "Danh mục xe",
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.person_outline),
+              selectedIcon: Icon(Icons.person, color: Colors.teal),
+              label: "Tài khoản", // 👤 Mục mới
             ),
           ],
         ),

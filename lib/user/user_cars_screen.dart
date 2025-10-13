@@ -32,7 +32,7 @@ class _UserCarsScreenState extends State<UserCarsScreen> {
     final cars = carProvider.cars;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Danh sách xe"), centerTitle: true),
+      appBar: AppBar(title: const Text("Danh mục xe"), centerTitle: true),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : cars.isEmpty

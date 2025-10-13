@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../providers/cart_provider.dart';
-import '../../providers/order_provider.dart'; // 👈 THÊM
-//import '../../models/cart_item.dart';
-//import '../../models/car.dart';
+import '../../providers/order_provider.dart';
+import '../../user/buyer_info_screen.dart'; // ✅ đúng đường dẫn
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -94,8 +93,21 @@ class _CartScreenState extends State<CartScreen> {
                           final user = FirebaseAuth.instance.currentUser;
                           if (user == null) return;
 
+                          // 👉 Mở form nhập thông tin người mua
+                          final buyerInfo = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  const BuyerInfoScreen(), // ✅ CHỮ HOA ĐÚNG
+                            ),
+                          );
+
+                          // Nếu người dùng bấm Back thì không làm gì
+                          if (buyerInfo == null) return;
+
                           final cars = items.map((e) => e.car).toList();
 
+                          // ✅ Gửi thông tin đặt hàng kèm thông tin người mua
                           await Provider.of<OrderProvider>(
                             context,
                             listen: false,
@@ -103,6 +115,8 @@ class _CartScreenState extends State<CartScreen> {
                             userId: user.uid,
                             cars: cars,
                             totalAmount: total,
+                            buyerInfo:
+                                buyerInfo, // ✅ TRUYỀN THÔNG TIN NGƯỜI MUA
                           );
 
                           for (var item in items) {
@@ -120,7 +134,7 @@ class _CartScreenState extends State<CartScreen> {
                             ),
                           );
 
-                          Navigator.pop(context); // quay về sau khi đặt
+                          Navigator.pop(context);
                         },
                         icon: const Icon(Icons.payment),
                         label: const Text("Đặt hàng"),
