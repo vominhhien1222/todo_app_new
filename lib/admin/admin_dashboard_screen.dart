@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
+
+// 📦 Các màn hình admin con
+import 'admin_users_screen.dart';
+import 'admin_cars_screen.dart';
+import 'admin_orders_screen.dart';
+import 'admin_todos_screen.dart';
+import 'admin_announcements_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -11,109 +19,168 @@ class AdminDashboardScreen extends StatefulWidget {
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   int selectedIndex = 0;
+  bool _isHoveringAvatar = false;
 
-  final List<String> menuItems = ["Dashboard", "Statistic", "Finance"];
+  final List<Map<String, dynamic>> menuItems = [
+    {'icon': Icons.dashboard, 'title': 'Dashboard'},
+    {'icon': Icons.people_alt, 'title': 'Users'},
+    {'icon': Icons.directions_car, 'title': 'Cars'},
+    {'icon': Icons.receipt_long, 'title': 'Orders'},
+    {'icon': Icons.check_circle, 'title': 'Todos'},
+    {'icon': Icons.campaign, 'title': 'Announcements'},
+    {'icon': Icons.account_balance_wallet, 'title': 'Finance'},
+    {'icon': Icons.bar_chart, 'title': 'Statistic'},
+  ];
+
+  Future<void> _logout(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+    if (context.mounted) {
+      Navigator.pushNamedAndRemoveUntil(context, "/login", (route) => false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFEFF6F5), Color(0xFFDFF3F0)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Row(
-          children: [
-            // 🔹 SIDEBAR
-            Container(
-              width: 230,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
-                borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(24),
-                  bottomRight: Radius.circular(24),
+      body: Row(
+        children: [
+          // 🟩 SIDEBAR
+          Container(
+            width: 250,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFEFF6F5), Color(0xFFDFF3F0)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Column(
+              children: [
+                const SizedBox(height: 40),
+
+                // Avatar admin
+                MouseRegion(
+                  onEnter: (_) => setState(() => _isHoveringAvatar = true),
+                  onExit: (_) => setState(() => _isHoveringAvatar = false),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOutCubic,
+                    transform: Matrix4.identity()
+                      ..scale(_isHoveringAvatar ? 1.1 : 1.0),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: _isHoveringAvatar
+                          ? [
+                              BoxShadow(
+                                color: Colors.teal.withOpacity(0.3),
+                                blurRadius: 15,
+                                spreadRadius: 3,
+                              ),
+                            ]
+                          : [],
+                    ),
+                    child: const CircleAvatar(
+                      radius: 36,
+                      backgroundImage: NetworkImage(
+                        "https://i.pravatar.cc/150?img=47",
+                      ),
+                      backgroundColor: Color(0xFFE0F2F1),
+                    ),
+                  ),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.teal.withOpacity(0.1),
-                    blurRadius: 12,
-                    offset: const Offset(3, 3),
+                const SizedBox(height: 12),
+                Text(
+                  user?.email ?? "Admin",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
                   ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  const SizedBox(height: 30),
-                  const Text(
-                    "🚗 Car Admin",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF3AB0A2),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 30),
+                const Divider(thickness: 0.5),
 
-                  // menu items
-                  for (int i = 0; i < menuItems.length; i++)
-                    _buildMenuItem(
-                      i == 0
-                          ? Icons.dashboard
-                          : i == 1
-                          ? Icons.bar_chart
-                          : Icons.account_balance_wallet,
-                      menuItems[i],
-                      i,
-                    ),
-                ],
-              ),
-            ),
-
-            // 🔹 MAIN CONTENT
-            Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 500),
-                transitionBuilder: (child, animation) {
-                  final offsetAnimation =
-                      Tween<Offset>(
-                        begin: const Offset(0.1, 0),
-                        end: Offset.zero,
-                      ).animate(
-                        CurvedAnimation(
-                          parent: animation,
-                          curve: Curves.easeOutCubic,
-                        ),
+                // Menu items
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: menuItems.length,
+                    itemBuilder: (context, index) {
+                      final item = menuItems[index];
+                      return _buildMenuItem(
+                        icon: item['icon'],
+                        title: item['title'],
+                        index: index,
                       );
+                    },
+                  ),
+                ),
 
-                  return FadeTransition(
-                    opacity: animation,
-                    child: SlideTransition(
-                      position: offsetAnimation,
-                      child: child,
+                const Divider(thickness: 0.5),
+                const SizedBox(height: 10),
+
+                // Logout
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 30),
+                  child: ListTile(
+                    leading: const Icon(Icons.logout, color: Colors.teal),
+                    title: const Text(
+                      "Logout",
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                  );
-                },
-                child: _getPage(selectedIndex),
-              ),
+                    onTap: () => _logout(context),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+
+          // 🟦 MAIN CONTENT
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 400),
+              transitionBuilder: (child, animation) {
+                final offsetAnimation =
+                    Tween<Offset>(
+                      begin: const Offset(0.1, 0),
+                      end: Offset.zero,
+                    ).animate(
+                      CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeOutCubic,
+                      ),
+                    );
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: offsetAnimation,
+                    child: child,
+                  ),
+                );
+              },
+              child: _getPage(selectedIndex),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildMenuItem(IconData icon, String title, int index) {
+  Widget _buildMenuItem({
+    required IconData icon,
+    required String title,
+    required int index,
+  }) {
     final bool isSelected = selectedIndex == index;
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: () => setState(() => selectedIndex = index),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
           decoration: BoxDecoration(
             color: isSelected
@@ -134,7 +201,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             children: [
               Icon(
                 icon,
-                color: isSelected ? const Color(0xFF3AB0A2) : Colors.grey[600],
+                color: isSelected
+                    ? const Color(0xFF3AB0A2)
+                    : Colors.grey.shade700,
               ),
               const SizedBox(width: 10),
               Text(
@@ -156,16 +225,32 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget _getPage(int index) {
     switch (index) {
       case 0:
-        return const _DashboardPage();
+        return const _DashboardPage(key: ValueKey("Dashboard"));
       case 1:
-        return const Center(
-          key: ValueKey("Statistic"),
-          child: Text("📈 Statistic Page (Coming soon...)"),
-        );
+        return const AdminUsersScreen(key: ValueKey("Users"));
       case 2:
+        return const AdminCarsScreen(key: ValueKey("Cars"));
+      case 3:
+        return const AdminOrdersScreen(key: ValueKey("Orders"));
+      case 4:
+        return const AdminTodosScreen(key: ValueKey("Todos"));
+      case 5:
+        return const AdminAnnouncementsScreen(key: ValueKey("Announcements"));
+      case 6:
         return const Center(
           key: ValueKey("Finance"),
-          child: Text("💰 Finance Page (Coming soon...)"),
+          child: Text(
+            "💰 Finance Page (Coming soon...)",
+            style: TextStyle(fontSize: 18),
+          ),
+        );
+      case 7:
+        return const Center(
+          key: ValueKey("Statistic"),
+          child: Text(
+            "📈 Statistic Page (Coming soon...)",
+            style: TextStyle(fontSize: 18),
+          ),
         );
       default:
         return const SizedBox.shrink();
@@ -173,8 +258,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 }
 
-// ==================== DASHBOARD PAGE =====================
-
+// ================= DASHBOARD PAGE =================
 class _DashboardPage extends StatefulWidget {
   const _DashboardPage({super.key});
 
@@ -237,33 +321,12 @@ class _DashboardPageState extends State<_DashboardPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                "Welcome back 👋",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.notifications_none),
-                    onPressed: () {},
-                  ),
-                  const CircleAvatar(
-                    radius: 20,
-                    backgroundImage: NetworkImage(
-                      'https://i.pravatar.cc/150?img=47',
-                    ),
-                  ),
-                ],
-              ),
-            ],
+          const Text(
+            "Dashboard Overview",
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 20),
 
-          // Summary cards
           Wrap(
             spacing: 16,
             runSpacing: 16,
@@ -345,7 +408,6 @@ class _DashboardPageState extends State<_DashboardPage> {
 }
 
 // ================== BAR CHART ==================
-
 class _BarChartDynamic extends StatelessWidget {
   final Map<String, int> data;
   const _BarChartDynamic({required this.data});
@@ -393,7 +455,6 @@ class _BarChartDynamic extends StatelessWidget {
 }
 
 // ================== PIE CHART ==================
-
 class _PieChartDynamic extends StatelessWidget {
   final Map<String, int> data;
   const _PieChartDynamic({required this.data});

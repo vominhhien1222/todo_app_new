@@ -7,9 +7,9 @@ import 'user/user_announcements_screen.dart';
 import 'admin/admin_panel_screen.dart';
 import 'admin/admin_users_screen.dart';
 import 'splash/splash_screen.dart';
-//import 'user/main_bottom_nav.dart';
 import 'admin/admin_todos_screen.dart';
 import 'user/user_main_screen.dart';
+import 'admin/admin_dashboard_screen.dart'; // ✅ Thêm route Dashboard mới
 
 class AppRoutes {
   static const String splash = '/splash';
@@ -22,7 +22,8 @@ class AppRoutes {
   static const String adminUsers = '/admin/users';
   static const String userMain = '/userMain';
   static const String adminTodos = '/adminTodos';
-  static const String adminPanel = '/adminPanel';
+  static const String adminPanel = '/adminPanel'; // ✅ Dashboard admin mới
+
   static Map<String, WidgetBuilder> get routes => {
     splash: (_) => const SplashScreen(),
     login: (_) => const LoginViaEmail(),
@@ -30,11 +31,14 @@ class AppRoutes {
     forget: (_) => const ForgetPassword(),
     todos: (_) => const UserTodosScreen(),
     userAnnouncements: (_) => const UserAnnouncementsScreen(),
+
+    // 🔹 Các màn hình admin
     admin: (_) => const AdminPanelScreen(),
     adminUsers: (_) => const AdminUsersScreen(),
-    //userMain: (_) => const MainBottomNav(),
     adminTodos: (_) => const AdminTodosScreen(),
+    adminPanel: (_) =>
+        const AdminDashboardScreen(), // ✅ Mở dashboard sidebar trái
+    // 🔹 Các màn hình user
     userMain: (_) => const UserMainScreen(),
-    adminPanel: (_) => const AdminPanelScreen(),
   };
 }
