@@ -20,7 +20,7 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
   DateTime? _deadline;
   bool _shared = false;
 
-  /// ✅ Thêm Todo (đã fix lỗi "Bad state: No element")
+  /// ✅ Thêm Todo
   Future<void> _addTodo() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -43,13 +43,7 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
       });
 
       _clearFields();
-
-      if (!mounted) return;
-
-      // ✅ Chỉ pop khi đang trong dialog
-      if (Navigator.canPop(context)) {
-        Navigator.pop(context);
-      }
+      if (mounted) Navigator.pop(context);
 
       ScaffoldMessenger.of(
         context,
@@ -64,7 +58,7 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
     }
   }
 
-  /// ✅ Cập nhật Todo
+  /// ✅ Sửa Todo
   Future<void> _editTodo(String id, Map<String, dynamic> data) async {
     _titleController.text = data["title"] ?? "";
     _descController.text = data["description"] ?? "";
@@ -89,7 +83,7 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
     );
   }
 
-  /// ✅ Dialog thêm/sửa Todo
+  /// ✅ Hiển thị dialog thêm/sửa
   void _showPastelDialog({
     required String title,
     required String confirmText,
@@ -256,8 +250,9 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = isDark ? Colors.tealAccent : Colors.teal;
-    final cardColor = isDark ? Colors.blueGrey.shade900 : Colors.teal.shade50;
+    final primaryColor = themeProvider.primaryColor; // ✅ dùng màu theme
+
+    final cardColor = isDark ? Colors.blueGrey.shade900 : primaryColor.shade50;
 
     return Scaffold(
       appBar: AppBar(
@@ -266,7 +261,9 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
         actions: [
           IconButton(
             icon: Icon(
-              themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+              themeProvider.currentTheme == ThemeMode.dark
+                  ? Icons.light_mode
+                  : Icons.dark_mode,
               color: Colors.white,
             ),
             onPressed: () => themeProvider.toggleTheme(),
@@ -312,7 +309,7 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 elevation: shared ? 5 : 2,
-                color: shared ? Colors.teal.shade50 : cardColor,
+                color: shared ? primaryColor.shade50 : cardColor,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -353,7 +350,7 @@ class _AdminTodosScreenState extends State<AdminTodosScreen> {
                         Text(
                           "📢 Đang chia sẻ với người dùng",
                           style: TextStyle(
-                            color: Colors.teal.shade700,
+                            color: primaryColor.shade700,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

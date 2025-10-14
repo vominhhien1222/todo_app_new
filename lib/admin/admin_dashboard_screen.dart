@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
 
 // 📦 Các màn hình admin con
 import 'admin_users_screen.dart';
@@ -42,6 +44,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colors = [
+      Colors.teal,
+      Colors.blue,
+      Colors.orange,
+      Colors.deepPurple,
+      Colors.pink,
+    ];
 
     return Scaffold(
       body: Row(
@@ -49,9 +59,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           // 🟩 SIDEBAR
           Container(
             width: 250,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFFEFF6F5), Color(0xFFDFF3F0)],
+                colors: [
+                  themeProvider.primaryColor.shade50,
+                  themeProvider.primaryColor.shade100,
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -74,7 +87,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       boxShadow: _isHoveringAvatar
                           ? [
                               BoxShadow(
-                                color: Colors.teal.withOpacity(0.3),
+                                color: themeProvider.primaryColor.withOpacity(
+                                  0.4,
+                                ),
                                 blurRadius: 15,
                                 spreadRadius: 3,
                               ),
@@ -99,7 +114,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 20),
                 const Divider(thickness: 0.5),
 
                 // Menu items
@@ -112,19 +127,71 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         icon: item['icon'],
                         title: item['title'],
                         index: index,
+                        themeColor: themeProvider.primaryColor,
                       );
                     },
                   ),
                 ),
 
                 const Divider(thickness: 0.5),
-                const SizedBox(height: 10),
+                const SizedBox(height: 6),
+
+                // 🎨 Tuỳ chỉnh giao diện
+                ExpansionTile(
+                  leading: Icon(
+                    Icons.palette,
+                    color: themeProvider.primaryColor,
+                  ),
+                  title: const Text(
+                    "Giao diện",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  children: [
+                    // Dark / Light switch
+                    SwitchListTile(
+                      title: const Text("Chế độ tối"),
+                      value: themeProvider.currentTheme == ThemeMode.dark,
+                      onChanged: (_) => themeProvider.toggleTheme(),
+                      secondary: const Icon(Icons.brightness_6),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      "Màu chủ đạo:",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: colors.map((color) {
+                        final isSelected = themeProvider.primaryColor == color;
+                        return GestureDetector(
+                          onTap: () => themeProvider.setPrimaryColor(color),
+                          child: CircleAvatar(
+                            backgroundColor: color,
+                            radius: isSelected ? 22 : 20,
+                            child: isSelected
+                                ? const Icon(Icons.check, color: Colors.white)
+                                : null,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                ),
+
+                const Divider(thickness: 0.5),
+                const SizedBox(height: 6),
 
                 // Logout
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 30),
+                  padding: const EdgeInsets.only(bottom: 20),
                   child: ListTile(
-                    leading: const Icon(Icons.logout, color: Colors.teal),
+                    leading: Icon(
+                      Icons.logout,
+                      color: themeProvider.primaryColor,
+                    ),
                     title: const Text(
                       "Logout",
                       style: TextStyle(fontWeight: FontWeight.bold),
@@ -171,6 +238,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     required IconData icon,
     required String title,
     required int index,
+    required MaterialColor themeColor,
   }) {
     final bool isSelected = selectedIndex == index;
 
@@ -183,14 +251,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
           decoration: BoxDecoration(
-            color: isSelected
-                ? const Color(0xFF3AB0A2).withOpacity(0.15)
-                : null,
+            color: isSelected ? themeColor.withOpacity(0.15) : null,
             borderRadius: BorderRadius.circular(12),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: Colors.teal.withOpacity(0.3),
+                      color: themeColor.withOpacity(0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -199,19 +265,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
           child: Row(
             children: [
-              Icon(
-                icon,
-                color: isSelected
-                    ? const Color(0xFF3AB0A2)
-                    : Colors.grey.shade700,
-              ),
+              Icon(icon, color: isSelected ? themeColor : Colors.grey.shade700),
               const SizedBox(width: 10),
               Text(
                 title,
                 style: TextStyle(
-                  color: isSelected
-                      ? const Color(0xFF3AB0A2)
-                      : Colors.grey[800],
+                  color: isSelected ? themeColor : Colors.grey[800],
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
@@ -312,9 +371,7 @@ class _DashboardPageState extends State<_DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    if (loading) return const Center(child: CircularProgressIndicator());
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
