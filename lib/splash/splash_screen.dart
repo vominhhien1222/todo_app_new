@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../auth/login_via_email.dart';
+import '../user/user_main_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -34,12 +36,23 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    // ⏳ Sau 3 giây → chuyển sang Login
+    // ⏳ Sau 3 giây → kiểm tra user đăng nhập
     Timer(const Duration(seconds: 3), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginViaEmail()),
-      );
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user != null) {
+        // 🔹 Nếu user đã đăng nhập -> vào màn hình chính của user
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const UserMainScreen()),
+        );
+      } else {
+        // 🔹 Nếu chưa đăng nhập -> vào màn hình đăng nhập
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginViaEmail()),
+        );
+      }
     });
   }
 
@@ -61,7 +74,7 @@ class _SplashScreenState extends State<SplashScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // 🚘 Logo app bán xe (bạn thay file PNG ở assets/images/logo_car.png)
+                // 🚘 Logo app bán xe (thay bằng logo của bạn)
                 Image.asset(
                   'assets/images/logo_car.png',
                   width: 180,

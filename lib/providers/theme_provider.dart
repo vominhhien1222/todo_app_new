@@ -12,7 +12,6 @@ class ThemeProvider extends ChangeNotifier {
     _loadThemeFromPrefs();
   }
 
-  /// 🔹 Toggle sáng/tối
   void toggleTheme() {
     _currentTheme = _currentTheme == ThemeMode.light
         ? ThemeMode.dark
@@ -21,14 +20,12 @@ class ThemeProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 🔹 Đổi màu chủ đạo
   void setPrimaryColor(MaterialColor color) {
     _primaryColor = color;
     _saveThemeToPrefs();
     notifyListeners();
   }
 
-  /// 🔹 ThemeData động — text, icon, scaffold đều đồng bộ
   ThemeData get lightTheme => ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
@@ -37,11 +34,11 @@ class ThemeProvider extends ChangeNotifier {
       brightness: Brightness.light,
     ),
     appBarTheme: AppBarTheme(
-      backgroundColor: _primaryColor,
-      foregroundColor: Colors.white,
+      backgroundColor: _primaryColor.shade500, // ✅ AppBar đồng bộ màu
+      foregroundColor: Colors.white, // chữ/icon sáng
     ),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
-      backgroundColor: _primaryColor,
+      backgroundColor: _primaryColor.shade500,
       foregroundColor: Colors.white,
     ),
     cardColor: _primaryColor.shade50,
@@ -56,17 +53,16 @@ class ThemeProvider extends ChangeNotifier {
     ),
     scaffoldBackgroundColor: Colors.grey.shade900,
     appBarTheme: AppBarTheme(
-      backgroundColor: _primaryColor.shade700,
+      backgroundColor: _primaryColor.shade700, // ✅ AppBar tối hơn chút
       foregroundColor: Colors.white,
     ),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       backgroundColor: _primaryColor.shade400,
       foregroundColor: Colors.black,
     ),
-    cardColor: Colors.grey.shade800, // hoặc shade900 nếu muốn tối hơn
+    cardColor: Colors.grey.shade800,
   );
 
-  /// 🔹 Lưu / Load theme
   Future<void> _saveThemeToPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     prefs.setBool('isDark', _currentTheme == ThemeMode.dark);
