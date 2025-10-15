@@ -163,20 +163,35 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: colors.map((color) {
-                        final isSelected = themeProvider.primaryColor == color;
+                      children: ThemeProvider.colorOptions.map((opt) {
+                        final isSelected =
+                            themeProvider.primaryColor == opt.color;
                         return GestureDetector(
-                          onTap: () => themeProvider.setPrimaryColor(color),
-                          child: CircleAvatar(
-                            backgroundColor: color,
-                            radius: isSelected ? 22 : 20,
-                            child: isSelected
-                                ? const Icon(Icons.check, color: Colors.white)
-                                : null,
+                          onTap: () => themeProvider.setPrimaryColor(opt.color),
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              CircleAvatar(
+                                radius: isSelected ? 24 : 22,
+                                backgroundColor: opt.color,
+                                child: Icon(
+                                  opt.icon,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
+                              if (isSelected)
+                                const Icon(
+                                  Icons.check_circle,
+                                  color: Colors.white,
+                                  size: 26,
+                                ),
+                            ],
                           ),
                         );
                       }).toList(),
                     ),
+
                     const SizedBox(height: 10),
                   ],
                 ),

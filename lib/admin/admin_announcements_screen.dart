@@ -34,7 +34,6 @@ class _AdminAnnouncementsScreenState extends State<AdminAnnouncementsScreen> {
         "createdAt": FieldValue.serverTimestamp(),
       });
 
-      // ✅ Đóng dialog an toàn (tránh lỗi Bad state)
       if (mounted) {
         Navigator.of(context, rootNavigator: true).pop();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -48,17 +47,23 @@ class _AdminAnnouncementsScreenState extends State<AdminAnnouncementsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text("❌ Lỗi khi thêm thông báo: $e")));
+        ).showSnackBar(SnackBar(content: Text("❌ Lỗi khi thêm: $e")));
       }
     }
   }
 
   /// 🔹 Dialog thêm thông báo
   void _openAddDialog() {
+    final colorScheme = Theme.of(context).colorScheme;
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Thêm thông báo"),
+        backgroundColor: colorScheme.surface,
+        title: Text(
+          "Thêm thông báo",
+          style: TextStyle(color: colorScheme.onSurface),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -80,6 +85,10 @@ class _AdminAnnouncementsScreenState extends State<AdminAnnouncementsScreen> {
             child: const Text("Hủy"),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colorScheme.primary,
+              foregroundColor: colorScheme.onPrimary,
+            ),
             onPressed: _addAnnouncement,
             child: const Text("Thêm"),
           ),
@@ -105,20 +114,24 @@ class _AdminAnnouncementsScreenState extends State<AdminAnnouncementsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text("❌ Lỗi khi xóa thông báo: $e")));
+        ).showSnackBar(SnackBar(content: Text("❌ Lỗi khi xóa: $e")));
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Quản lý thông báo"),
-        backgroundColor: Colors.red.shade700,
+        backgroundColor: colorScheme.primary, // ✅ đồng bộ màu theme
+        foregroundColor: colorScheme.onPrimary, // ✅ chữ trắng/dark tự động
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.red.shade700,
+        backgroundColor: colorScheme.primary, // ✅ đồng bộ theme
         onPressed: _openAddDialog,
         child: const Icon(Icons.add),
       ),
@@ -129,7 +142,7 @@ class _AdminAnnouncementsScreenState extends State<AdminAnnouncementsScreen> {
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text("⚠️ Lỗi tải dữ liệu: ${snapshot.error}"));
+            return Center(child: Text("⚠️ Lỗi: ${snapshot.error}"));
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -152,29 +165,36 @@ class _AdminAnnouncementsScreenState extends State<AdminAnnouncementsScreen> {
               final createdAt = (data["createdAt"] as Timestamp?)?.toDate();
 
               return Card(
+                color: colorScheme.surface, // ✅ đồng bộ màu nền card
                 margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 child: ListTile(
                   title: Text(
                     title,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
                   ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 4),
-                      Text(content),
+                      Text(
+                        content,
+                        style: TextStyle(color: colorScheme.onSurfaceVariant),
+                      ),
                       if (createdAt != null)
                         Text(
-                          "📅 Ngày: ${createdAt.day}/${createdAt.month}/${createdAt.year}",
-                          style: const TextStyle(
+                          "📅 ${createdAt.day}/${createdAt.month}/${createdAt.year}",
+                          style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey,
+                            color: colorScheme.onSurfaceVariant,
                           ),
                         ),
                     ],
                   ),
                   trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
+                    icon: Icon(Icons.delete, color: colorScheme.error),
                     onPressed: () => _deleteAnnouncement(doc.id),
                   ),
                 ),

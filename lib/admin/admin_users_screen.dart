@@ -23,7 +23,6 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
 
   // ========================= CRUD =========================
 
-  /// Thêm User (mặc định status = active)
   Future<void> _addUser() async {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
@@ -41,8 +40,8 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     await FirebaseFirestore.instance.collection("users").add({
       "name": name,
       "email": email,
-      "role": role, // chuỗi: user/admin/super_admin
-      "status": "active", // 'active' | 'locked'
+      "role": role,
+      "status": "active",
       "createdAt": FieldValue.serverTimestamp(),
     });
 
@@ -52,16 +51,18 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     if (mounted) Navigator.pop(context);
   }
 
-  /// Sửa User (name/email/role)
   Future<void> _editUser(String id, Map<String, dynamic> data) async {
     _nameController.text = (data["name"] ?? "").toString();
     _emailController.text = (data["email"] ?? "").toString();
     _roleController.text = (data["role"] ?? "user").toString();
 
+    final colorScheme = Theme.of(context).colorScheme;
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Sửa User"),
+        backgroundColor: colorScheme.surface,
+        title: Text("Sửa User", style: TextStyle(color: colorScheme.onSurface)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -87,6 +88,10 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             child: const Text("Hủy"),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colorScheme.primary,
+              foregroundColor: colorScheme.onPrimary,
+            ),
             onPressed: () async {
               final name = _nameController.text.trim();
               final email = _emailController.text.trim();
@@ -107,19 +112,31 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     );
   }
 
-  /// Xóa User (xác nhận)
   Future<void> _deleteUser(String id, String email) async {
+    final colorScheme = Theme.of(context).colorScheme;
+
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Xóa user?"),
-        content: Text("Bạn có chắc muốn xóa user: $email ?"),
+        backgroundColor: colorScheme.surface,
+        title: Text(
+          "Xóa user?",
+          style: TextStyle(color: colorScheme.onSurface),
+        ),
+        content: Text(
+          "Bạn có chắc muốn xóa user: $email ?",
+          style: TextStyle(color: colorScheme.onSurfaceVariant),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: const Text("Hủy"),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colorScheme.error,
+              foregroundColor: colorScheme.onError,
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: const Text("Xóa"),
           ),
@@ -136,7 +153,6 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     }
   }
 
-  /// Khóa/Mở khóa user (status)
   Future<void> _toggleLockUser({
     required String id,
     required bool currentlyLocked,
@@ -154,14 +170,17 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     );
   }
 
-  // ========================= Dialog =========================
-
-  /// Dialog thêm User
   void _openAddDialog() {
+    final colorScheme = Theme.of(context).colorScheme;
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Thêm User"),
+        backgroundColor: colorScheme.surface,
+        title: Text(
+          "Thêm User",
+          style: TextStyle(color: colorScheme.onSurface),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -186,25 +205,31 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             onPressed: () => Navigator.pop(context),
             child: const Text("Hủy"),
           ),
-          ElevatedButton(onPressed: _addUser, child: const Text("Thêm")),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colorScheme.primary,
+              foregroundColor: colorScheme.onPrimary,
+            ),
+            onPressed: _addUser,
+            child: const Text("Thêm"),
+          ),
         ],
       ),
     );
   }
 
-  // ========================= UI =========================
-
   @override
   Widget build(BuildContext context) {
-    final color = Colors.red.shade700;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text("Quản lý Users"),
-        backgroundColor: color,
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: color,
+        backgroundColor: colorScheme.primary,
         onPressed: _openAddDialog,
         child: const Icon(Icons.add),
       ),
@@ -231,42 +256,43 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
 
               final name = (data["name"] ?? "").toString();
               final email = (data["email"] ?? "Không có email").toString();
-              final role = (data["role"] ?? "user")
-                  .toString(); // user/admin/super_admin
-              final status = (data["status"] ?? "active")
-                  .toString(); // active/locked
+              final role = (data["role"] ?? "user").toString();
+              final status = (data["status"] ?? "active").toString();
               final locked = status == 'locked';
-
               final isProtectedAdmin = role == 'admin' || role == 'super_admin';
 
               return Card(
+                color: colorScheme.surface,
                 margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: color.withOpacity(0.15),
+                    backgroundColor: colorScheme.primary.withOpacity(0.15),
                     child: Text(
                       (name.isNotEmpty ? name[0] : email[0]).toUpperCase(),
                       style: TextStyle(
-                        color: color,
+                        color: colorScheme.primary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                  title: Text(email),
+                  title: Text(
+                    email,
+                    style: TextStyle(color: colorScheme.onSurface),
+                  ),
                   subtitle: Text(
                     "Tên: ${name.isEmpty ? '(Không tên)' : name} • Role: $role • Trạng thái: $status",
+                    style: TextStyle(color: colorScheme.onSurfaceVariant),
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Lock/Unlock: Không cho khóa admin/super_admin
                       if (!isProtectedAdmin)
                         IconButton(
                           tooltip: locked ? 'Mở khóa' : 'Khóa',
                           icon: Icon(
                             locked ? Icons.lock_open : Icons.lock,
-                            color: locked ? const Color.fromARGB(255, 73, 236, 79) : Colors.orange,
-                                 ),
+                            color: locked ? Colors.green : Colors.orangeAccent,
+                          ),
                           onPressed: () => _toggleLockUser(
                             id: doc.id,
                             currentlyLocked: locked,
@@ -275,12 +301,12 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                         ),
                       IconButton(
                         tooltip: 'Sửa',
-                        icon: const Icon(Icons.edit, color: Colors.blue),
+                        icon: Icon(Icons.edit, color: colorScheme.secondary),
                         onPressed: () => _editUser(doc.id, data),
                       ),
                       IconButton(
                         tooltip: 'Xóa',
-                        icon: const Icon(Icons.delete, color: Colors.red),
+                        icon: Icon(Icons.delete, color: colorScheme.error),
                         onPressed: () => _deleteUser(doc.id, email),
                       ),
                     ],
