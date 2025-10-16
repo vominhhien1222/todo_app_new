@@ -45,13 +45,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     final themeProvider = Provider.of<ThemeProvider>(context);
-    final colors = [
-      Colors.teal,
-      Colors.blue,
-      const Color.fromARGB(255, 251, 255, 0),
-      Colors.deepPurple,
-      Colors.pink,
-    ];
 
     return Scaffold(
       body: Row(
@@ -72,14 +65,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             child: Column(
               children: [
                 const SizedBox(height: 40),
-
-                // Avatar admin
                 MouseRegion(
                   onEnter: (_) => setState(() => _isHoveringAvatar = true),
                   onExit: (_) => setState(() => _isHoveringAvatar = false),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeOutCubic,
                     transform: Matrix4.identity()
                       ..scale(_isHoveringAvatar ? 1.1 : 1.0),
                     decoration: BoxDecoration(
@@ -116,8 +106,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
                 const SizedBox(height: 20),
                 const Divider(thickness: 0.5),
-
-                // Menu items
                 Expanded(
                   child: ListView.builder(
                     itemCount: menuItems.length,
@@ -132,11 +120,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     },
                   ),
                 ),
-
                 const Divider(thickness: 0.5),
-                const SizedBox(height: 6),
-
-                // 🎨 Tuỳ chỉnh giao diện
                 ExpansionTile(
                   leading: Icon(
                     Icons.palette,
@@ -147,7 +131,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   children: [
-                    // Dark / Light switch
                     SwitchListTile(
                       title: const Text("Chế độ tối"),
                       value: themeProvider.currentTheme == ThemeMode.dark,
@@ -191,29 +174,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         );
                       }).toList(),
                     ),
-
-                    const SizedBox(height: 10),
                   ],
                 ),
-
-                const Divider(thickness: 0.5),
-                const SizedBox(height: 6),
-
-                // Logout
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: ListTile(
-                    leading: Icon(
-                      Icons.logout,
-                      color: themeProvider.primaryColor,
-                    ),
-                    title: const Text(
-                      "Logout",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    onTap: () => _logout(context),
+                ListTile(
+                  leading: Icon(
+                    Icons.logout,
+                    color: themeProvider.primaryColor,
                   ),
+                  title: const Text(
+                    "Logout",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  onTap: () => _logout(context),
                 ),
+                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -222,25 +196,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           Expanded(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 400),
-              transitionBuilder: (child, animation) {
-                final offsetAnimation =
-                    Tween<Offset>(
-                      begin: const Offset(0.1, 0),
-                      end: Offset.zero,
-                    ).animate(
-                      CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOutCubic,
-                      ),
-                    );
-                return FadeTransition(
-                  opacity: animation,
-                  child: SlideTransition(
-                    position: offsetAnimation,
-                    child: child,
-                  ),
-                );
-              },
               child: _getPage(selectedIndex),
             ),
           ),
@@ -256,41 +211,37 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     required MaterialColor themeColor,
   }) {
     final bool isSelected = selectedIndex == index;
-
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () => setState(() => selectedIndex = index),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-          decoration: BoxDecoration(
-            color: isSelected ? themeColor.withOpacity(0.15) : null,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: themeColor.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : [],
-          ),
-          child: Row(
-            children: [
-              Icon(icon, color: isSelected ? themeColor : Colors.grey.shade700),
-              const SizedBox(width: 10),
-              Text(
-                title,
-                style: TextStyle(
-                  color: isSelected ? themeColor : Colors.grey[800],
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
+    return GestureDetector(
+      onTap: () => setState(() => selectedIndex = index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+        decoration: BoxDecoration(
+          color: isSelected ? themeColor.withOpacity(0.15) : null,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: themeColor.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: isSelected ? themeColor : Colors.grey.shade700),
+            const SizedBox(width: 10),
+            Text(
+              title,
+              style: TextStyle(
+                color: isSelected ? themeColor : Colors.grey[800],
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -301,31 +252,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       case 0:
         return const _DashboardPage(key: ValueKey("Dashboard"));
       case 1:
-        return const AdminUsersScreen(key: ValueKey("Users"));
+        return const AdminUsersScreen();
       case 2:
-        return const AdminCarsScreen(key: ValueKey("Cars"));
+        return const AdminCarsScreen();
       case 3:
-        return const AdminOrdersScreen(key: ValueKey("Orders"));
+        return const AdminOrdersScreen();
       case 4:
-        return const AdminTodosScreen(key: ValueKey("Todos"));
+        return const AdminTodosScreen();
       case 5:
-        return const AdminAnnouncementsScreen(key: ValueKey("Announcements"));
+        return const AdminAnnouncementsScreen();
       case 6:
-        return const Center(
-          key: ValueKey("Finance"),
-          child: Text(
-            "💰 Finance Page (Coming soon...)",
-            style: TextStyle(fontSize: 18),
-          ),
-        );
+        return const Center(child: Text("💰 Finance Page (Coming soon...)"));
       case 7:
-        return const Center(
-          key: ValueKey("Statistic"),
-          child: Text(
-            "📈 Statistic Page (Coming soon...)",
-            style: TextStyle(fontSize: 18),
-          ),
-        );
+        return const Center(child: Text("📈 Statistic Page (Coming soon...)"));
       default:
         return const SizedBox.shrink();
     }
@@ -335,7 +274,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 // ================= DASHBOARD PAGE =================
 class _DashboardPage extends StatefulWidget {
   const _DashboardPage({super.key});
-
   @override
   State<_DashboardPage> createState() => _DashboardPageState();
 }
@@ -357,7 +295,6 @@ class _DashboardPageState extends State<_DashboardPage> {
     final snapshot = await FirebaseFirestore.instance
         .collection('orders')
         .get();
-
     double revenue = 0;
     int orders = 0;
     Map<String, int> brands = {};
@@ -367,12 +304,16 @@ class _DashboardPageState extends State<_DashboardPage> {
       final data = doc.data();
       revenue += (data['totalAmount'] ?? 0).toDouble();
       orders++;
-
       final brand = (data['brand'] ?? 'Khác').toString();
       brands[brand] = (brands[brand] ?? 0) + 1;
-
       final status = (data['status'] ?? 'pending').toString();
       statuses[status] = (statuses[status] ?? 0) + 1;
+    }
+
+    // thêm dữ liệu test để dễ thấy hiệu ứng
+    if (brands.length < 3) {
+      brands.addAll({"Toyota": 5, "Honda": 3, "BMW": 2});
+      statuses.addAll({"pending": 3, "delivered": 4, "cancelled": 1});
     }
 
     setState(() {
@@ -387,7 +328,6 @@ class _DashboardPageState extends State<_DashboardPage> {
   @override
   Widget build(BuildContext context) {
     if (loading) return const Center(child: CircularProgressIndicator());
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -398,52 +338,49 @@ class _DashboardPageState extends State<_DashboardPage> {
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 20),
-
           Wrap(
             spacing: 16,
             runSpacing: 16,
             children: [
               _buildSummaryCard(
-                icon: Icons.attach_money,
-                title: "Tổng doanh thu",
-                value: "${totalRevenue.toStringAsFixed(0)} VND",
-                color: const Color(0xFF3AB0A2),
+                Icons.attach_money,
+                "Tổng doanh thu",
+                "${totalRevenue.toStringAsFixed(0)} VND",
+                const Color(0xFF3AB0A2),
               ),
               _buildSummaryCard(
-                icon: Icons.shopping_bag,
-                title: "Số đơn hàng",
-                value: "$totalOrders",
-                color: const Color(0xFFFFC371),
+                Icons.shopping_bag,
+                "Số đơn hàng",
+                "$totalOrders",
+                const Color(0xFFFFC371),
               ),
             ],
           ),
           const SizedBox(height: 30),
-
           const Text(
             "🚘 Top xe bán chạy",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          SizedBox(height: 200, child: _BarChartDynamic(data: topBrands)),
-
+          SizedBox(height: 220, child: _BarChartDynamic(data: topBrands)),
           const SizedBox(height: 32),
           const Text(
             "📦 Tỉ lệ trạng thái đơn hàng",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          SizedBox(height: 220, child: _PieChartDynamic(data: statusCount)),
+          SizedBox(height: 250, child: _PieChartDynamic(data: statusCount)),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryCard({
-    required IconData icon,
-    required String title,
-    required String value,
-    required Color color,
-  }) {
+  Widget _buildSummaryCard(
+    IconData icon,
+    String title,
+    String value,
+    Color color,
+  ) {
     return Container(
       width: 260,
       padding: const EdgeInsets.all(18),
@@ -479,93 +416,171 @@ class _DashboardPageState extends State<_DashboardPage> {
   }
 }
 
-// ================== BAR CHART ==================
-class _BarChartDynamic extends StatelessWidget {
+// ============== BAR CHART (Tap + Glow) ==============
+class _BarChartDynamic extends StatefulWidget {
   final Map<String, int> data;
   const _BarChartDynamic({required this.data});
+  @override
+  State<_BarChartDynamic> createState() => _BarChartDynamicState();
+}
 
+class _BarChartDynamicState extends State<_BarChartDynamic> {
+  int? touchedIndex;
   @override
   Widget build(BuildContext context) {
-    final entries = data.entries.toList();
+    final entries = widget.data.entries.toList();
     if (entries.isEmpty) return const Center(child: Text("Không có dữ liệu."));
-
     return BarChart(
       BarChartData(
         gridData: const FlGridData(show: false),
+        borderData: FlBorderData(show: false),
         titlesData: FlTitlesData(
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
               getTitlesWidget: (value, _) {
                 if (value.toInt() < entries.length) {
-                  return Text(
-                    entries[value.toInt()].key,
-                    style: const TextStyle(fontSize: 12),
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      entries[value.toInt()].key,
+                      style: const TextStyle(fontSize: 11),
+                    ),
                   );
                 }
-                return const Text("");
+                return const SizedBox.shrink();
               },
             ),
           ),
         ),
+        barTouchData: BarTouchData(
+          enabled: true,
+          handleBuiltInTouches: true,
+          touchTooltipData: BarTouchTooltipData(
+            tooltipBgColor: Colors.black87,
+            getTooltipItem: (group, _, rod, __) {
+              final item = entries[group.x.toInt()];
+              return BarTooltipItem(
+                "${item.key}\n",
+                const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+                children: [
+                  TextSpan(
+                    text: "${rod.toY.toInt()} xe",
+                    style: const TextStyle(color: Colors.amberAccent),
+                  ),
+                ],
+              );
+            },
+          ),
+          touchCallback: (event, response) {
+            if (!event.isInterestedForInteractions ||
+                response == null ||
+                response.spot == null) {
+              setState(() => touchedIndex = -1);
+              return;
+            }
+            setState(() => touchedIndex = response.spot!.touchedBarGroupIndex);
+          },
+        ),
         barGroups: List.generate(entries.length, (i) {
+          final isTapped = i == touchedIndex;
+          final y = entries[i].value.toDouble();
           return BarChartGroupData(
             x: i,
             barRods: [
               BarChartRodData(
-                toY: entries[i].value.toDouble(),
-                color: const Color(0xFF3AB0A2),
-                width: 20,
-                borderRadius: BorderRadius.circular(6),
+                toY: isTapped ? y * 1.2 : y,
+                width: 24,
+                borderRadius: BorderRadius.circular(8),
+                gradient: LinearGradient(
+                  colors: isTapped
+                      ? [const Color(0xFF3AB0A2), const Color(0xFFB2EBF2)]
+                      : [const Color(0xFFB2EBF2), const Color(0xFF3AB0A2)],
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                ),
+                rodStackItems: isTapped
+                    ? [
+                        BarChartRodStackItem(
+                          0,
+                          y,
+                          const Color(0x66FFFFFF),
+                        ), // glow overlay
+                      ]
+                    : [],
               ),
             ],
           );
         }),
       ),
+      swapAnimationDuration: const Duration(milliseconds: 700),
     );
   }
 }
 
-// ================== PIE CHART ==================
-class _PieChartDynamic extends StatelessWidget {
+// ============== PIE CHART (Tap + Glow) ==============
+class _PieChartDynamic extends StatefulWidget {
   final Map<String, int> data;
   const _PieChartDynamic({required this.data});
+  @override
+  State<_PieChartDynamic> createState() => _PieChartDynamicState();
+}
 
+class _PieChartDynamicState extends State<_PieChartDynamic> {
+  int? touchedIndex;
   @override
   Widget build(BuildContext context) {
-    final total = data.values.fold<int>(0, (a, b) => a + b);
-    final entries = data.entries.toList();
-
+    final total = widget.data.values.fold<int>(0, (a, b) => a + b);
+    final entries = widget.data.entries.toList();
     if (total == 0) return const Center(child: Text("Không có dữ liệu."));
-
     final colors = [
       const Color(0xFF3AB0A2),
       const Color(0xFFFFC371),
-      Colors.blueAccent,
-      Colors.purpleAccent,
-      Colors.redAccent,
+      const Color(0xFF6AD7E5),
+      const Color(0xFFB388FF),
+      const Color(0xFFFF6F61),
     ];
-
     return PieChart(
       PieChartData(
-        sectionsSpace: 2,
-        centerSpaceRadius: 40,
+        sectionsSpace: 3,
+        centerSpaceRadius: 45,
+        pieTouchData: PieTouchData(
+          touchCallback: (event, response) {
+            if (!event.isInterestedForInteractions ||
+                response == null ||
+                response.touchedSection == null) {
+              setState(() => touchedIndex = -1);
+              return;
+            }
+            setState(
+              () => touchedIndex = response.touchedSection!.touchedSectionIndex,
+            );
+          },
+        ),
         sections: List.generate(entries.length, (i) {
           final e = entries[i];
+          final isTapped = i == touchedIndex;
           final percent = (e.value / total * 100).toStringAsFixed(1);
           return PieChartSectionData(
             value: e.value.toDouble(),
             color: colors[i % colors.length],
-            title: '${e.key}\n$percent%',
-            radius: 60,
-            titleStyle: const TextStyle(
-              fontSize: 12,
-              color: Colors.white,
+            radius: isTapped ? 85 : 65,
+            title: "${e.key}\n$percent%",
+            titleStyle: TextStyle(
+              fontSize: isTapped ? 15 : 12,
               fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
+            borderSide: isTapped
+                ? BorderSide(color: Colors.white.withOpacity(0.9), width: 4)
+                : BorderSide.none,
           );
         }),
       ),
+      swapAnimationDuration: const Duration(milliseconds: 700),
     );
   }
 }
