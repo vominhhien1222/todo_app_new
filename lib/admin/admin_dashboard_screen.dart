@@ -312,7 +312,7 @@ class _DashboardPageState extends State<_DashboardPage> {
 
     // thêm dữ liệu test để dễ thấy hiệu ứng
     if (brands.length < 3) {
-      brands.addAll({"Toyota": 5, "Honda": 3, "BMW": 2});
+      brands.addAll({"Vespa": 5, "Audi": 3, "BMW": 2});
       statuses.addAll({"pending": 3, "delivered": 4, "cancelled": 1});
     }
 
